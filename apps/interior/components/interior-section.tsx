@@ -11,7 +11,7 @@ export function InteriorSection() {
           {/* Image */}
           <div className="order-1 md:order-2 relative aspect-[4/3] overflow-hidden rounded-2xl">
             <Image
-              src="/images/interior-view.png"
+              src="/images/build1.jpg"
               alt="Interior living collection"
               fill
               className="object-cover"
