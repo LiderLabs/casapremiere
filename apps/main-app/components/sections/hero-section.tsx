@@ -128,7 +128,7 @@ export function HeroSection() {
               {/* Text Behind - Fades out first */}
               <div 
                 className="absolute inset-0 z-0 flex items-center justify-center"
-                style={{ opacity: textOpacity, transform: 'translateY(-160px)' }}
+                style={{ opacity: textOpacity, transform: 'translateY(-140px)' }}
               >
                 <h1 className="whitespace-nowrap text-[35vw] font-bold leading-[0.8] tracking-tighter text-black">
                   {word.split("").map((letter, index) => (

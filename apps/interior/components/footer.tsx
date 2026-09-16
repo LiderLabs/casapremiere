@@ -10,7 +10,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-2">
             <Link href="/" className="inline-block mb-6">
-              <Image src="/images/casa01.svg" alt="Hously" width={120} height={60} className="w-auto h-6" />
+              <Image src="/images/casa01.svg" alt="Hously" width={120} height={60} className="w-auto h-10" />
             </Link>
             <p className="text-muted-foreground leading-relaxed max-w-sm">
               We design spaces that elevate living. A refined architectural experience where form, light, and intention

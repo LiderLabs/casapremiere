@@ -40,7 +40,7 @@ export function Header() {
     >
       <nav className="container mx-auto px-6 flex items-center justify-between md:px-[24]">
         <Link href="/" className="flex items-center gap-2 group" onClick={scrollToTop}>
-          <Image src="/images/casa.svg" alt="Hously" width={120} height={32} className="w-auto h-6" />
+          <Image src="/images/casa.svg" alt="Hously" width={120} height={32} className="w-auto h-10" />
         </Link>
 
         <ul className="hidden md:flex items-center gap-10 text-sm tracking-wide">
