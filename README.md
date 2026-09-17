@@ -12,7 +12,7 @@ Both sites were merged from two separate apps into one, verified **pixel-identic
 ## Project structure
 
 ```
-apps/main-app/                 ← the single deployable app
+repo root/                     ← the single app (repository root)
   app/
     (site)/                    ← main site (route group, no URL segment)
       layout.tsx  globals.css  page.tsx        → "/"
@@ -32,7 +32,6 @@ The two route groups each ship their **own** root layout and `globals.css`, so t
 ## Local development
 
 ```bash
-cd apps/main-app
 npm install
 npm run dev        # http://localhost:3000  (/ and /interior)
 ```
@@ -44,7 +43,7 @@ npm run build      # compiles both routes as static pages
 npm start          # serves on :3000
 ```
 
-> Use `package-lock.json` (npm). A leftover `pnpm-lock.yaml` may be deleted — npm warns about it during builds.
+> Use `package-lock.json` (npm). The leftover `pnpm-lock.yaml` was removed.
 
 ## Deployment (Vercel)
 
@@ -56,13 +55,13 @@ The app is a standard Next.js 16 project — no env vars, no custom server, no e
 2. In Vercel: **Add New → Project → Import** `LiderLabs/casapremiere`.
 3. Configure:
    - **Framework Preset**: Next.js (auto-detected)
-   - **Root Directory**: `apps/main-app`
+   - **Root Directory**: leave blank (repository root)
    - **Build Command / Install Command**: leave defaults
    - **Environment Variables**: none needed
    - Node.js 20+ (default)
 4. Deploy. The **preview URL** is a full production build — verify `/` and `/interior` there.
 5. **Domains**: assign your production domain (e.g. `casapremiere.com`) to this project.
-   - If the interior site previously lived on its own domain/URL, add a **redirect** in Vercel (Project → Settings → Domains, or a `redirects` entry in `apps/main-app/next.config.mjs`) from the old interior URL → `/interior`.
+   - If the interior site previously lived on its own domain/URL, add a **redirect** in Vercel (Project → Settings → Domains, or a `redirects` entry in `next.config.mjs`) from the old interior URL → `/interior`.
 6. Retire the two old projects (keep them paused as an instant fallback for the first week).
 
 ### Day-to-day after cutover
