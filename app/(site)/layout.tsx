@@ -11,8 +11,21 @@ export const metadata: Metadata = {
   description: 'High-performance outdoor gear engineered for the modern explorer. Lightweight, durable, adventure-ready.',
   generator: 'v0.app',
   icons: {
-    icon: ['/CASA-512x512.png', '/CASA.svg'],
-    apple: '/CASA-512x512.png',
+    other: [
+      {
+        rel: 'icon',
+        url: '/CASA1.png',
+        media: '(prefers-color-scheme: light)',
+        type: 'image/png',
+      },
+      {
+        rel: 'icon',
+        url: '/casa copy.svg',
+        media: '(prefers-color-scheme: dark)',
+        type: 'image/svg+xml',
+      },
+    ],
+    apple: '/CASA1.png',
   },
 }
 
