@@ -1,5 +1,5 @@
-// Cross-site link to the sister project (Hously — the Exterior).
-// Set NEXT_PUBLIC_SISTER_SITE_URL in .env.local / production env;
-// falls back to the local dev port.
-export const SISTER_SITE_URL =
-  process.env.NEXT_PUBLIC_SISTER_SITE_URL ?? "http://localhost:3000";
+// Links between the two sites, now one app: "/" = CASA (main), "/interior" = Hously (interior).
+// NOTE: usage sites append "/" (e.g. `${X}/`), so the root target is intentionally "".
+export const SISTER_SITE_URL = "/interior"; // main site → interior site ("/interior/")
+export const MAIN_SITE_URL = ""; // interior site → main site ("/")
+

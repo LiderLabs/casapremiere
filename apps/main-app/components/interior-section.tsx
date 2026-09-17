@@ -1,7 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight } from "lucide-react"
-import { SISTER_SITE_URL } from "@/lib/site-links"
+import { MAIN_SITE_URL } from "@/lib/site-links"
 
 export function InteriorSection() {
   return (
@@ -33,7 +33,7 @@ export function InteriorSection() {
             </p>
 
             <a
-              href={`${SISTER_SITE_URL}/`}
+              href={`${MAIN_SITE_URL}/`}
               className="inline-flex items-center gap-3 bg-white text-foreground border border-foreground/20 px-8 py-4 text-sm tracking-wide hover:bg-foreground hover:text-white transition-colors duration-300 group"
             >
               Explore the Exterior

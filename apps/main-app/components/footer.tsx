@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { SISTER_SITE_URL } from "@/lib/site-links"
+import { MAIN_SITE_URL } from "@/lib/site-links"
 
 export function Footer() {
   return (
@@ -43,7 +43,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href={`${SISTER_SITE_URL}/`} className="hover:text-foreground transition-colors">
+                <a href={`${MAIN_SITE_URL}/`} className="hover:text-foreground transition-colors">
                   Exterior
                 </a>
               </li>

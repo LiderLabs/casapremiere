@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { SISTER_SITE_URL } from "@/lib/site-links"
+import { MAIN_SITE_URL } from "@/lib/site-links"
 import Image from "next/image"
 
 export function Header() {
@@ -50,7 +50,7 @@ export function Header() {
             { label: "Projects", href: "#projects" },
             { label: "What we do", href: "#services" },
             { label: "FAQ", href: "#faq" },
-            { label: "Exterior", href: `${SISTER_SITE_URL}/` },
+            { label: "Exterior", href: `${MAIN_SITE_URL}/` },
           ].map((item) => (
             <li key={item.label}>
               <Link
@@ -108,7 +108,7 @@ export function Header() {
               { label: "Projects", href: "#projects" },
               { label: "What we do", href: "#services" },
               { label: "FAQ", href: "#faq" },
-              { label: "Interior", href: `${SISTER_SITE_URL}/` },
+              { label: "Interior", href: `${MAIN_SITE_URL}/` },
             ].map((item) => (
               <li key={item.label}>
                 <Link
