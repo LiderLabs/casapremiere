@@ -12,7 +12,7 @@ export function ExteriorSection() {
           {/* Image */}
           <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-secondary">
             <FadeImage
-              src="/images/build1.jpg"
+              src="/images/mono3.jpg"
               alt="Exterior architecture"
               fill
               className="object-cover"
