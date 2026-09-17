@@ -28,7 +28,7 @@ const projects = [
     year: "2023",
     image: "/images/hously-3.png", // Updated path to /images/ subdirectory
   },
-  {
+  { 
     id: 4,
     title: "Nordic Retreat",
     category: "Hospitality",

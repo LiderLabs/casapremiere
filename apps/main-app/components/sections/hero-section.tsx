@@ -128,7 +128,7 @@ export function HeroSection() {
               {/* Text Behind - Fades out first */}
               <div 
                 className="absolute inset-0 z-0 flex items-center justify-center"
-                style={{ opacity: textOpacity, transform: 'translateY(-140px)' }}
+                style={{ opacity: textOpacity, transform: 'translateY(-160px)' }}
               >
                 <h1 className="whitespace-nowrap text-[35vw] font-bold leading-[0.8] tracking-tighter text-black">
                   {word.split("").map((letter, index) => (
@@ -148,7 +148,7 @@ export function HeroSection() {
               </div>
               
               <Image
-                src="/images/build 2.png"
+                src="/images/casabuild.png"
                 alt="Modern architectural structure with reflection"
                 fill
                 className="absolute inset-0 z-10 object-cover"
