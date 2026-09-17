@@ -18,11 +18,12 @@ const footerLinks = {
     { label: "Exterior", href: `${SISTER_SITE_URL}/` },
   ],
   service: [
-    { label: "FAQ", href: "#" },
-    { label: "Shipping", href: "#" },
-    { label: "Returns", href: "#" },
-    { label: "Warranty", href: "#" },
+    { label: "Consultation", href: "#consultation" },
+    { label: "Installation", href: "#installation" },
+    { label: "Maintenance", href: "#maintenance" },
+    { label: "Support", href: "#support" },
   ],
+  
 };
 
 export function FooterSection() {
