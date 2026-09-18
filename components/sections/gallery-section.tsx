@@ -9,8 +9,8 @@ export function GallerySection() {
   const rafRef = useRef<number | null>(null);
 
   const images = [
-    { src: "/images/mono_2.jpg", alt: "Modern architecture at sunrise" },
-    { src: "/images/mono_3.jpg", alt: "Modern architecture in daylight" },
+    { src: "/images/mono_01.jpg", alt: "Modern architecture at sunrise" },
+    { src: "/images/mono_2.jpg", alt: "Modern architecture in daylight" },
     { src: "/images/mono_4.jpg", alt: "Modern architecture at dusk" },
     { src: "/images/mono_1.jpg", alt: "Modern architecture at night" },
   ];

@@ -9,6 +9,21 @@ const specs = [
   { label: "Carbon Balance", value: "-20%" },
 ];
 
+// Casa Premier Homes on YouTube (channel UCEihlfk9yxRij_sWxeAd_OA).
+// A <video src> can only load a real media FILE (mp4/webm) — a youtube.com channel page is
+// HTML, which is why the previous <video src="https://www.youtube.com/@Casapremierhomes" />
+// rendered an empty box. YouTube content must be shown through an <iframe> pointed at /embed/.
+const YOUTUBE_VIDEO_ID = "vJlmnCnwPjk";
+
+// autoplay=1 only works together with mute=1 (browser autoplay policy);
+// loop=1 is ignored by YouTube unless playlist=<same id> is present;
+// playsinline keeps iOS from forcing fullscreen; controls=0 + disablekb=1 keep the player
+// as a clean background video.
+const YOUTUBE_EMBED_SRC =
+  `https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}` +
+  `?autoplay=1&mute=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}` +
+  `&controls=0&disablekb=1&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1`;
+
 export function EditorialSection() {
   const videoRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -65,22 +80,28 @@ export function EditorialSection() {
       </div>
 
       {/* Full-width Video with Parallax */}
-      <div ref={videoRef} className="relative aspect-[16/9] w-full md:aspect-[21/9] overflow-hidden">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 h-full w-full object-cover"
+      <div ref={videoRef} className="relative aspect-[16/9] w-full overflow-hidden md:aspect-[21/9]">
+        {/* The 16:9 player is oversized to "cover" the wider band (the iframe equivalent of
+            object-cover), so the overflow-hidden parent crops it instead of letterboxing. */}
+        <div
+          className="absolute left-1/2 top-1/2 h-[56.25vw] min-h-full w-[177.78vh] min-w-full"
           style={{
-            transform: `scale(1.15) translate3d(0, ${parallaxY}px, 0) translateZ(0)`,
-            WebkitTransform: `scale(1.15) translate3d(0, ${parallaxY}px, 0) translateZ(0)`,
+            transform: `translate3d(-50%, calc(-50% + ${parallaxY}px), 0) scale(1.15)`,
+            WebkitTransform: `translate3d(-50%, calc(-50% + ${parallaxY}px), 0) scale(1.15)`,
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
             willChange: 'transform',
           }}
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/27eb7fb4-0105-4010-ac9e-0ac977a31b05_1-FZ89nvBAAsR3caRJbhYv7T2mjBofth.mp4"
-        />
+        >
+          <iframe
+            src={YOUTUBE_EMBED_SRC}
+            title="Casa Premier Homes — Prime Villas"
+            className="absolute inset-0 h-full w-full border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
       </div>
 
       {/* Specs Grid */}
