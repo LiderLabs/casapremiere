@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { SISTER_SITE_URL } from "@/lib/site-links";
 
@@ -26,10 +27,23 @@ export function Header() {
       }}
     >
       <div className="flex items-center justify-between transition-all duration-300 px-2 pl-5 py-2">
-        {/* Logo */}
-        <Link href="#hero" className="text-lg font-medium tracking-tight transition-colors duration-300 text-foreground">
-          CASA
+               {/* Logo  */}
+        <Link
+          href="#hero"
+          aria-label="CASA Premier — home"
+          className="relative block h-10 w-[60px] shrink-0 overflow-hidden rounded-md bg-transparent transition-all duration-300 hover:opacity-80"
+        >
+          <Image
+            src="/CASA1.png"
+            alt="CASA Premier"
+            width={500}
+            height={500}
+            priority
+            className="absolute top-1/2 left-1/2 h-[70px] w-[70px] -translate-x-1/2 -translate-y-1/2 object-contain"
+          />
         </Link>
+ 
+
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-10 md:flex">

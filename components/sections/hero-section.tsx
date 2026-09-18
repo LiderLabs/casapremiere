@@ -3,29 +3,29 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-const word = "CASA";
+const word = "";
 
 const sideImages = [
   {
-    src: "/images/hero-side-1.png",
+    src: "/images/hero-bg1.jpg",
     alt: "Modern architecture with corten steel",
     position: "left",
     span: 1,
   },
   {
-    src: "/images/hero-side-2.png",
+    src: "/images/herobg2.jpg",
     alt: "Aerial view of modern home",
     position: "left",
     span: 1,
   },
   {
-    src: "/images/hero-side-3.png",
+    src: "/images/herobg3.jpg",
     alt: "Interior view with landscape",
     position: "right",
     span: 1,
   },
   {
-    src: "/images/hero-side-4.png",
+    src: "/images/herobg4.jpg",
     alt: "Modern architecture at night",
     position: "right",
     span: 1,
