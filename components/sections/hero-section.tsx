@@ -191,7 +191,7 @@ export function HeroSection() {
 
       {/* Tagline Section - Fixed at bottom */}
       <div 
-        className="pointer-events-none fixed bottom-0 left-0 right-0 z-10 px-6 pb-12 md:px-12 md:pb-16 lg:px-20 lg:pb-20"
+        className="pointer-events-none fixed bottom-0 left-0 right-0 z-10 px-6 pb-8 md:px-12 md:pb-10 lg:px-20 lg:pb-12"
         style={{ opacity: textOpacity }}
       >
         <p className="mx-auto max-w-2xl text-center text-2xl leading-relaxed text-white md:text-3xl lg:text-[2.5rem] lg:leading-snug">
