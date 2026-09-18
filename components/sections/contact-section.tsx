@@ -29,8 +29,8 @@ const contactDetails = [
   {
     icon: Mail,
     label: "Email",
-    value: "info@casa.com",
-    href: "mailto:info@casa.com",
+    value: "projects@casapremiergh.com",
+    href: "mailto:projects@casapremiergh.com",
   },
   {
     icon: Phone,
