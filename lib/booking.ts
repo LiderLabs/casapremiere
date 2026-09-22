@@ -46,10 +46,10 @@ export const BOOKING_HORIZON_DAYS = 90;
 export const BOOKING_BLACKOUT_DATES: readonly string[] = [];
 
 export const BOOKING_SERVICES = [
-  "New home design",
+  "Visit our site",
   "Renovation / remodel",
   "Interior design",
-  "Site visit",
+  "New home model",
   "General consultation",
   "Other",
 ] as const;
