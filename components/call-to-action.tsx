@@ -2,8 +2,11 @@
 
 import { ArrowRight } from "lucide-react"
 import { HighlightedText } from "./highlighted-text"
+import { useBooking } from "@/components/booking/booking-provider"
 
 export function CallToAction() {
+  const { openBooking } = useBooking()
+
   return (
     <section id="contact" className="py-32 md:py-29 bg-foreground text-primary-foreground">
       <div className="container mx-auto px-6 md:px-12">
@@ -28,12 +31,13 @@ export function CallToAction() {
               Begin the conversation
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </a>
-            <a
-              href="tel:+1234567890"
+            <button
+              type="button"
+              onClick={() => openBooking({ service: "Interior design" })}
               className="inline-flex items-center justify-center gap-2 border border-primary-foreground/30 px-8 py-4 text-sm tracking-wide hover:bg-primary-foreground/10 transition-colors duration-300"
             >
-              Schedule a call
-            </a>
+              Book a consultation
+            </button>
           </div>
         </div>
       </div>

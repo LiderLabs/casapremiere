@@ -2,8 +2,20 @@
 
 import Link from "next/link";
 import { SISTER_SITE_URL } from "@/lib/site-links";
+import { useBooking } from "@/components/booking/booking-provider";
 
-const footerLinks = {
+type FooterLink = {
+  label: string;
+  href?: string;
+  /** Opens the appointment booking modal instead of navigating. */
+  action?: "book";
+};
+
+const footerLinks: {
+  explore: FooterLink[];
+  about: FooterLink[];
+  service: FooterLink[];
+} = {
   explore: [
     { label: "Products", href: "#products" },
     { label: "Technology", href: "#technology" },
@@ -14,17 +26,46 @@ const footerLinks = {
     { label: "Our Story", href: "#" },
     { label: "Team", href: "#" },
     { label: "Careers", href: "#" },
-    { label: "Contact", href: "#" },
+    { label: "Contact", href: "#contact" },
     { label: "Exterior", href: `${SISTER_SITE_URL}/` },
   ],
   service: [
-    { label: "Consultation", href: "#consultation" },
+    { label: "Consultation", action: "book" },
+    { label: "Book an appointment", action: "book" },
     { label: "Installation", href: "#installation" },
     { label: "Maintenance", href: "#maintenance" },
     { label: "Support", href: "#support" },
   ],
-  
 };
+
+function FooterLinkList({ links }: { links: FooterLink[] }) {
+  const { openBooking } = useBooking();
+
+  return (
+    <ul className="space-y-3">
+      {links.map((link) => (
+        <li key={link.label}>
+          {link.action === "book" ? (
+            <button
+              type="button"
+              onClick={() => openBooking()}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </button>
+          ) : (
+            <Link
+              href={link.href ?? "#"}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export function FooterSection() {
   return (
@@ -45,52 +86,19 @@ export function FooterSection() {
           {/* Explore */}
           <div>
             <h4 className="mb-4 text-sm font-medium text-foreground">Explore</h4>
-            <ul className="space-y-3">
-              {footerLinks.explore.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <FooterLinkList links={footerLinks.explore} />
           </div>
 
           {/* About */}
           <div>
             <h4 className="mb-4 text-sm font-medium text-foreground">About</h4>
-            <ul className="space-y-3">
-              {footerLinks.about.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <FooterLinkList links={footerLinks.about} />
           </div>
 
           {/* Service */}
           <div>
             <h4 className="mb-4 text-sm font-medium text-foreground">Service</h4>
-            <ul className="space-y-3">
-              {footerLinks.service.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <FooterLinkList links={footerLinks.service} />
           </div>
         </div>
       </div>

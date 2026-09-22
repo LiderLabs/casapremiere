@@ -16,6 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useBooking } from "@/components/booking/booking-provider";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Please enter your name."),
@@ -48,6 +49,7 @@ const contactDetails = [
 
 export function ContactSection() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { openBooking } = useBooking();
 
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
@@ -110,6 +112,15 @@ export function ContactSection() {
                 </li>
               ))}
             </ul>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => openBooking()}
+              className="mt-10 rounded-full"
+            >
+              Prefer to book a visit?
+            </Button>
           </div>
 
           {/* Contact Form */}

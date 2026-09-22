@@ -5,10 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { SISTER_SITE_URL } from "@/lib/site-links";
+import { useBooking } from "@/components/booking/booking-provider";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { openBooking } = useBooking();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -71,6 +73,12 @@ export function Header() {
           >
             About
           </Link>
+          <Link
+            href="#contact"
+            className="text-sm transition-colors text-muted-foreground hover:text-foreground"
+          >
+            Contact
+          </Link>
           <a
             href={`${SISTER_SITE_URL}/`}
             className="text-sm transition-colors text-muted-foreground hover:text-foreground"
@@ -81,13 +89,13 @@ export function Header() {
 
         {/* CTA */}
         <div className="hidden items-center gap-6 md:flex">
-          <Link
-  href="#contact"
-  className="px-4 py-2 text-sm font-medium transition-all rounded-full bg-foreground text-background hover:opacity-80"
->
-  Contact
-</Link>
-
+          <button
+            type="button"
+            onClick={() => openBooking()}
+            className="px-4 py-2 text-sm font-medium transition-all rounded-full bg-foreground text-background hover:opacity-80"
+          >
+            Book a Visit
+          </button>
         </div>
 
         {/* Mobile Menu Button */}
@@ -140,16 +148,24 @@ export function Header() {
             >
               Interior
             </a>
-           
-           <Link
-  href="#contact"  
-  className="mt-4 bg-foreground px-5 py-3 text-center text-sm font-medium text-background rounded-full"
-  onClick={() => setIsMenuOpen(false)}
->
-  Contact
-</Link>
+            <Link
+              href="#contact"
+              className="text-lg text-foreground"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Contact
+            </Link>
 
-
+            <button
+              type="button"
+              onClick={() => {
+                setIsMenuOpen(false);
+                openBooking();
+              }}
+              className="mt-4 bg-foreground px-5 py-3 text-center text-sm font-medium text-background rounded-full"
+            >
+              Book a Visit
+            </button>
           </nav>
         </div>
       )}

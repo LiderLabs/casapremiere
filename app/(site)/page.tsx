@@ -10,22 +10,26 @@ import { ExteriorSection } from "@/components/sections/interior-section";
 import { TestimonialsSection } from "@/components/sections/testimonials-section";
 import { FooterSection } from "@/components/sections/footer-section";
 import { ContactSection } from "@/components/sections/contact-section";
+import { BookingProvider } from "@/components/booking/booking-provider";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background">
-      <Header />
-      <HeroSection />
-      <PhilosophySection />
-      <FeaturedProductsSection />
-      <TechnologySection />
-      <GallerySection />
-      <CollectionSection />
-      <EditorialSection />
-      <ExteriorSection />
-      <TestimonialsSection />
-      <ContactSection/>
-      <FooterSection />
-    </main>
+    <BookingProvider>
+      <main className="min-h-screen bg-background">
+        <Header />
+        <HeroSection />
+        <PhilosophySection />
+        <FeaturedProductsSection />
+        <TechnologySection />
+        <GallerySection />
+        <CollectionSection />
+        <EditorialSection />
+        <ExteriorSection />
+        <TestimonialsSection />
+        <ContactSection />
+        <FooterSection />
+      </main>
+    </BookingProvider>
   );
 }
+

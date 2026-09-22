@@ -80,6 +80,59 @@ Any Node 20+ host works with defaults: `npm run build && npm start` (single port
 - Interior → main: `MAIN_SITE_URL` (resolves to `/`)
 - These are relative paths, so they work on any domain without configuration.
 
+## Appointment booking
+
+Both sites share one booking flow that is **UI-complete but not yet wired to a
+delivery channel** — deliberately, so the site never claims to have received a
+request it cannot deliver.
+
+| Piece | Where |
+|---|---|
+| Modal (form, calendar, slots, success view) | `components/booking/booking-modal.tsx` |
+| Provider + `useBooking()` hook, single `<Dialog>` instance | `components/booking/booking-provider.tsx` |
+| Rules, formatters and message builder | `lib/booking.ts` |
+
+**Triggers:** the header pill (`Book a Visit`, desktop + mobile menu), the contact
+section's `Prefer to book a visit?` button, the footer's `Consultation` /
+`Book an appointment` entries (which open the modal instead of navigating), the
+interior page's call-to-action button, and the deep links `/#book` and `/?book=1`.
+
+The provider is mounted in **both** route groups (`app/(site)/page.tsx` and
+`app/(interior)/layout.tsx`), so the same modal opens from either site. The modal
+inherits each route group's own design tokens, so it renders in CASA's
+black-and-white on `/` and Hously's warm neutrals on `/interior`. The interior CTA
+opens it with `openBooking({ service: "Interior design" })`, which presets the
+service field via `BookingPrefill` (`lib/booking.ts`) without wiping anything
+already typed.
+
+**Availability** is configuration, not code — edit `lib/booking.ts`:
+
+```ts
+export const BOOKING_SLOTS = [...];            // bookable times
+export const BOOKING_WEEKDAYS = [1, 2, 3, 4, 5]; // Mon-Fri
+export const BOOKING_MIN_LEAD_DAYS = 1;        // earliest = tomorrow
+export const BOOKING_HORIZON_DAYS = 90;        // calendar range
+export const BOOKING_BLACKOUT_DATES = [];      // e.g. ["2026-12-25"]
+```
+
+`isDateAvailable()` is used by both the calendar (`disabled`) and the zod schema,
+so a stale modal cannot submit a past date, a weekend or a blackout day.
+
+**Current behaviour:** `BOOKING_SUBMISSION_ENABLED` is `false`, so
+`Request Appointment` is disabled and the modal's primary action is a **WhatsApp
+hand-off** — `bookingWhatsAppHref()` URL-encodes whatever the visitor has typed
+into `wa.me/233555287488`. Nothing is sent or stored by the site; the visitor's own
+app sends it. Phone (`tel:`) and email (`mailto:`) links are also available.
+
+**To enable real submissions later:** add the delivery call (API route + email)
+inside `onSubmit` in `booking-modal.tsx` and flip
+`BOOKING_SUBMISSION_ENABLED` to `true` in `lib/booking.ts`. Validation, the
+calendar rules, the loading/success states and the empty-honeypot guard are
+already in place.
+
+The modal is loaded with `next/dynamic` on first open, so Radix Dialog,
+react-day-picker, react-hook-form and zod stay out of the initial page bundle.
+
 ## History note
 
 The original two apps were `apps/interior` (Hously) and `apps/main-app`. `apps/interior` was removed after the merge was verified; it remains fully recoverable from git history (`git log --oneline -- apps/interior`, `git checkout <commit> -- apps/interior`).

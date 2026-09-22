@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { BookingProvider } from "@/components/booking/booking-provider"
 import "./globals.css"
 
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -25,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        {children}
+        <BookingProvider>{children}</BookingProvider>
         <Analytics />
       </body>
     </html>
