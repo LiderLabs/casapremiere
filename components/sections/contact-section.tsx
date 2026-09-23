@@ -17,10 +17,27 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useBooking } from "@/components/booking/booking-provider";
+import { BOOKING_SERVICES } from "@/lib/booking";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Please enter your name."),
   email: z.string().email("Please enter a valid email address."),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\+?[0-9()\-\s]{7,20}$/, "Please enter a valid phone number.")
+    .optional()
+    .or(z.literal("")),
+  projectType: z.enum(BOOKING_SERVICES, {
+    errorMap: () => ({ message: "Please choose a project type." }),
+  }),
   message: z.string().min(10, "Message must be at least 10 characters."),
 });
 
@@ -41,7 +58,7 @@ const contactDetails = [
   },
   {
     icon: MapPin,
-    label: "Office",
+    label: "Studio",
     value: "Adjiringanor school junction Accra, Ghana",
     href: undefined,
   },
@@ -56,6 +73,7 @@ export function ContactSection() {
     defaultValues: {
       name: "",
       email: "",
+      phone: "",
       message: "",
     },
   });
@@ -75,15 +93,14 @@ export function ContactSection() {
           {/* Contact Details */}
           <div>
             <p className="mb-4 text-xs uppercase tracking-widest text-muted-foreground">
-              Contact Us
+              Start a Project
             </p>
             <h2 className="text-3xl font-medium tracking-tight text-foreground md:text-4xl">
-              Get in Touch
+              Let's Create Your Next Space.
             </h2>
             <p className="mt-6 max-w-md text-sm leading-relaxed text-muted-foreground md:text-base">
-              We would love to hear from you! Whether you have questions about
-              our designs, want to discuss a project, or just want to say
-              hello — our team is here to assist you.
+              Whether you are searching for your next property, planning a new development or ready
+              to transform your interior, our team is ready to bring your vision to life.
             </p>
 
             <ul className="mt-10 space-y-6">
@@ -119,7 +136,7 @@ export function ContactSection() {
               onClick={() => openBooking()}
               className="mt-10 rounded-full"
             >
-              Prefer to book a visit?
+              Prefer to book a Visit?
             </Button>
           </div>
 
@@ -134,8 +151,8 @@ export function ContactSection() {
                   Message sent
                 </h3>
                 <p className="max-w-sm text-sm text-muted-foreground">
-                  Thanks for reaching out. Our team will get back to you within
-                  1–2 business days.
+                  Thanks for reaching out. Our team will reply within one
+                  business day.
                 </p>
                 <Button
                   type="button"
@@ -148,6 +165,9 @@ export function ContactSection() {
               </div>
             ) : (
               <Form {...form}>
+                <h3 className="mb-6 text-xl font-medium text-foreground">
+                  Tell Us About Your Project
+                </h3>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
                   className="space-y-6"
@@ -178,6 +198,50 @@ export function ContactSection() {
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone (optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="tel"
+                            placeholder="+233 555 287 488"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="projectType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project Type</FormLabel>
+                        <Select
+                          value={field.value ?? ""}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Choose a project type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {BOOKING_SERVICES.map((service) => (
+                              <SelectItem key={service} value={service}>
+                                {service}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

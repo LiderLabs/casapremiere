@@ -5,23 +5,24 @@ import { HighlightedText } from "./highlighted-text"
 
 const philosophyItems = [
   {
-    title: "Minimal, not empty",
+    title: "Light and material",
     description:
-      "Every element has purpose and space to breathe. We remove the unnecessary to reveal what truly matters.",
+      "Daylight is the first material. We plan rooms around it, then choose finishes that hold it — lime plaster, timber, stone and brushed brass.",
   },
   {
-    title: "Architecture-led design",
+    title: "Space that flows",
     description:
-      "Layouts inspired by structure, rhythm, and materiality. Buildings that speak through proportion and light.",
+      "Sight lines, thresholds and storage are resolved early, so living, dining and rest connect without clutter or wasted corridor.",
   },
   {
-    title: "Subtle motion",
+    title: "Made to measure",
     description:
-      "Motion supports the experience, never distracts. Movement that feels natural, like light shifting through a room.",
+      "Bespoke joinery, wardrobes and kitchens drawn for each home — nothing from a catalogue, nothing that fights the walls.",
   },
   {
-    title: "Timeless aesthetic",
-    description: "Elegant, calm, and enduring visual language. Designs that transcend trends and age with grace.",
+    title: "Cool by design",
+    description:
+      "Shading, airflow and thermal mass keep interiors comfortable through the Accra heat, without leaning on the air conditioner.",
   },
 ]
 
@@ -74,8 +75,9 @@ export function Philosophy() {
           {/* Right column - Description and Philosophy items */}
           <div className="space-y-6 lg:pt-48">
             <p className="text-muted-foreground text-lg leading-relaxed max-w-md mb-12">
-              Architecture is more than structure — it's how we experience the world. We create spaces that nurture the
-              human spirit.
+              An interior should feel inevitable — as if the house could not have been arranged any
+              other way. We design every CASA Premier home from the inside out, and take on a small
+              number of interiors for clients' own spaces each year.
             </p>
 
             {philosophyItems.map((item, index) => (

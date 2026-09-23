@@ -6,35 +6,35 @@ import { ArrowUpRight } from "lucide-react"
 const projects = [
   {
     id: 1,
-    title: "Villa Serena",
-    category: "Residential",
-    location: "Malibu, California",
-    year: "2024",
-    image: "/images/hously-1.png", // Updated path to /images/ subdirectory
+    title: "The Ridge House",
+    category: "Full interior fit-out",
+    location: "Adjiringanor, Accra",
+    year: "2026",
+    image: "/images/interior_1.jpg", // Updated path to /images/ subdirectory
   },
   {
     id: 2,
-    title: "The Glass Pavilion",
-    category: "Commercial",
-    location: "Tokyo, Japan",
-    year: "2023",
-    image: "/images/hously-2.png", // Updated path to /images/ subdirectory
+    title: "Courtyard Kitchen",
+    category: "Kitchen and dining",
+    location: "Accra",
+    year: "2025",
+    image: "/images/interior_2.jpg", // Updated path to /images/ subdirectory
   },
   {
     id: 3,
-    title: "Casa Terra",
-    category: "Residential",
-    location: "Lisbon, Portugal",
-    year: "2023",
-    image: "/images/hously-3.png", // Updated path to /images/ subdirectory
+    title: "Quiet Bedrooms",
+    category: "Bedrooms and joinery",
+    location: "Casa Premier Estate",
+    year: "2025",
+    image: "/images/interior_3.jpg", // Updated path to /images/ subdirectory
   },
   { 
     id: 4,
-    title: "Nordic Retreat",
-    category: "Hospitality",
-    location: "Oslo, Norway",
+    title: "Studio at Home",
+    category: "Live-work interior",
+    location: "Accra",
     year: "2024",
-    image: "/images/hously-4.png", // Updated path to /images/ subdirectory
+    image: "/images/interior_4.jpg", // Updated path to /images/ subdirectory
   },
 ]
 
@@ -70,14 +70,14 @@ export function Projects() {
       <div className="container mx-auto px-6 md:px-12">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16">
           <div>
-            <p className="text-muted-foreground text-sm tracking-[0.3em] uppercase mb-6">Selected Works</p>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight">Featured Projects</h2>
+            <p className="text-muted-foreground text-sm tracking-[0.3em] uppercase mb-6">Interiors Made</p>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight">Selected Interiors</h2>
           </div>
           <a
             href="#"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
           >
-            View all projects
+            Talk to the studio
             <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </a>
         </div>

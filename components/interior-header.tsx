@@ -40,14 +40,14 @@ export function Header() {
     >
       <nav className="container mx-auto px-6 flex items-center justify-between md:px-[24]">
         <Link href="/" className="flex items-center gap-2 group" onClick={scrollToTop}>
-          <Image src="/images/casa.svg" alt="Hously" width={120} height={32} className="w-auto h-10" />
+          <Image src="/images/casa.svg" alt="CASA Premier" width={120} height={32} className="w-auto h-10" />
         </Link>
 
         <ul className="hidden md:flex items-center gap-10 text-sm tracking-wide">
           {[
             { label: "Home", href: "#hero" },
             { label: "Philosophy", href: "#about" },
-            { label: "Projects", href: "#projects" },
+            { label: "Interiors", href: "#projects" },
             { label: "What we do", href: "#services" },
             { label: "FAQ", href: "#faq" },
             { label: "Exterior", href: `${MAIN_SITE_URL}/` },
@@ -105,10 +105,10 @@ export function Header() {
             {[
               { label: "Home", href: "#hero" },
               { label: "Philosophy", href: "#about" },
-              { label: "Projects", href: "#projects" },
+              { label: "Interiors", href: "#projects" },
               { label: "What we do", href: "#services" },
               { label: "FAQ", href: "#faq" },
-              { label: "Interior", href: `${MAIN_SITE_URL}/` },
+              { label: "Exterior", href: `${MAIN_SITE_URL}/` },
             ].map((item) => (
               <li key={item.label}>
                 <Link

@@ -7,8 +7,8 @@ import './globals.css'
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 
 export const metadata: Metadata = { 
-  title: 'CASA',
-  description: 'High-performance outdoor gear engineered for the modern explorer. Lightweight, durable, adventure-ready.',
+  title: 'CASA Premier — Premium Property & Interior Design in Accra',
+  description: 'Premium real estate and interior design in Accra — curated properties, considered interiors, property development and renovation.',
   generator: 'v0.app',
   icons: {
   icon: ['/logowhite.png', '/logowhite.png'],   // (site): single-quoted, (interior): double-quoted to match each file's style

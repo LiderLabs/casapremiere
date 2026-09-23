@@ -17,24 +17,23 @@ const footerLinks: {
   service: FooterLink[];
 } = {
   explore: [
-    { label: "Products", href: "#products" },
-    { label: "Technology", href: "#technology" },
+    { label: "Properties", href: "#properties" },
     { label: "Gallery", href: "#gallery" },
-    { label: "Accessories", href: "#accessories" },
+    { label: "Developments", href: "#services" },
+    { label: "Interior Design", href: `${SISTER_SITE_URL}/` },
   ],
   about: [
-    { label: "Our Story", href: "#" },
-    { label: "Team", href: "#" },
-    { label: "Careers", href: "#" },
+    { label: "About Us", href: "#about" },
+    { label: "Our Approach", href: "#services" },
+    { label: "Our Process", href: "#process" },
     { label: "Contact", href: "#contact" },
-    { label: "Exterior", href: `${SISTER_SITE_URL}/` },
   ],
   service: [
-    { label: "Consultation", action: "book" },
-    { label: "Book an appointment", action: "book" },
-    { label: "Installation", href: "#installation" },
-    { label: "Maintenance", href: "#maintenance" },
-    { label: "Support", href: "#support" },
+    { label: "Real Estate", href: "#properties" },
+    { label: "Interior Design", href: `${SISTER_SITE_URL}/` },
+    { label: "Property Development", href: "#services" },
+    { label: "Renovation & Styling", href: "#contact" },
+    { label: "Book a consultation", action: "book" },
   ],
 };
 
@@ -79,7 +78,8 @@ export function FooterSection() {
               CASA
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Sustainable design homes combining contemporary aesthetics with energy efficiency and eco-friendly materials.
+              Spaces thoughtfully designed. Properties carefully curated. Premium real estate and
+              interior design in Accra, Ghana.
             </p>
           </div>
 
@@ -91,13 +91,13 @@ export function FooterSection() {
 
           {/* About */}
           <div>
-            <h4 className="mb-4 text-sm font-medium text-foreground">About</h4>
+            <h4 className="mb-4 text-sm font-medium text-foreground">Company</h4>
             <FooterLinkList links={footerLinks.about} />
           </div>
 
           {/* Service */}
           <div>
-            <h4 className="mb-4 text-sm font-medium text-foreground">Service</h4>
+            <h4 className="mb-4 text-sm font-medium text-foreground">Services</h4>
             <FooterLinkList links={footerLinks.service} />
           </div>
         </div>
@@ -107,7 +107,7 @@ export function FooterSection() {
       <div className="border-t border-border px-6 py-6 md:px-12 lg:px-20">
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-xs text-muted-foreground">
-            2026 CASA. All rights reserved.
+            © 2026 CASA Premier. All rights reserved.
           </p>
 
           
@@ -124,7 +124,7 @@ export function FooterSection() {
               href="#"
               className="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
-              Twitter
+              LinkedIn
             </Link>
             <Link
               href="#"

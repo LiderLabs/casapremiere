@@ -25,17 +25,18 @@ export function ExteriorSection() {
               The Interior
             </p>
             <h2 className="text-3xl font-medium tracking-tight text-foreground md:text-4xl">
-              explore the interior
+              The Art of the Interior
             </h2>
             <p className="mt-6 max-w-md text-sm leading-relaxed text-muted-foreground md:text-base">
-              Every interior begins with a structure. Discover the buildings,
-              facades and spaces designed by our architecture studio.
+              Step inside spaces where architecture, furniture, materials and light come
+              together. From contemporary minimalism to warm, sophisticated interiors, we
+              create environments that reflect the people who live, work and gather in them.
             </p>
             <a
               href={`${SISTER_SITE_URL}/`}
               className="mt-8 inline-block rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-all hover:opacity-80"
             >
-              Explore the Interior
+              Explore Our Interiors
             </a>
           </div>
         </div>

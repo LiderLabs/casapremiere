@@ -20,12 +20,13 @@ export function CallToAction() {
           </h2>
 
           <p className="text-primary-foreground/70 text-lg md:text-xl leading-relaxed mb-12 max-w-2xl mx-auto">
-            Let's discuss how we can bring your vision to life. Every great space begins with a conversation.
+            Tell us about your space, your budget and your timeline. Every interior starts with a
+            conversation.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="mailto:hello@hously.com"
+              href="mailto:projects@casapremiergh.com"
               className="inline-flex items-center justify-center gap-3 bg-primary-foreground text-foreground px-8 py-4 text-sm tracking-wide hover:bg-primary-foreground/90 transition-colors duration-300 group"
             >
               Begin the conversation

@@ -11,7 +11,7 @@ export function InteriorSection() {
           {/* Image */}
           <div className="order-1 md:order-2 relative aspect-[4/3] overflow-hidden rounded-2xl">
             <Image
-              src="/images/build1.jpg"
+              src="/images/exterior.png"
               alt="Interior living collection"
               fill
               className="object-cover"
@@ -25,18 +25,19 @@ export function InteriorSection() {
             </p>
 
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium leading-[1.1] tracking-tight mb-8 text-balance">
-              explore the exterior
+              See the architecture
             </h2>
 
             <p className="text-muted-foreground text-lg leading-relaxed mb-12 max-w-md">
-              Experience the exterior of our architectural designs, where form meets function and aesthetics blend seamlessly with the environment. Discover how our exterior spaces are crafted to enhance the living experience, providing both beauty and practicality.
+              The buildings, façades and estate plans behind every interior — designed by our
+              architecture studio in Adjiringanor, Accra.
             </p>
 
             <a
               href={`${MAIN_SITE_URL}/`}
               className="inline-flex items-center gap-3 bg-white text-foreground border border-foreground/20 px-8 py-4 text-sm tracking-wide hover:bg-foreground hover:text-white transition-colors duration-300 group"
             >
-              Explore the Exterior
+              Explore the Estate
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </a>
           </div>

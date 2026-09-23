@@ -78,9 +78,9 @@ const sideImages = [
 ];
 
 const textCycles = [
-  "Design & Sustainability.",
-  "Passive Energy.",
-  "Bio-sourced Construction.",
+  "Thoughtful Design.",
+  "Timeless Materials.",
+  "Personal Spaces.",
 ];
 
 export function TechnologySection() {
@@ -89,7 +89,7 @@ export function TechnologySection() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [textProgress, setTextProgress] = useState(0);
   
-  const descriptionText = "Passive architecture reimagining modern living. Triple glazing, reinforced insulation and natural ventilation combine with solar panels to create an energy-autonomous home. Bio-sourced materials like solid wood and hemp wool ensure healthy indoor air and minimal ecological footprint.";
+  const descriptionText = "Designed around the way you live. A beautiful space should do more than impress — it should feel right. Exceptional interiors begin with understanding the people who inhabit them. Every material, proportion, colour and detail is carefully considered to create spaces that are sophisticated, functional and deeply personal.";
 
   useEffect(() => {
     const handleScroll = () => {

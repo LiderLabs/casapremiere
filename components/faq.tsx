@@ -5,34 +5,34 @@ import { Plus } from "lucide-react"
 
 const faqs = [
   {
-    question: "Where are your projects located?",
+    question: "Where is CASA Premier Estate?",
     answer:
-      "While our studio is based in San Francisco, we work on projects throughout Northern California and select locations nationwide. We believe in creating architecture that responds to its specific context and community.",
+      "The estate is in Adjiringanor, Accra, and our studio works from the same address. Visits are by appointment Monday to Friday, 09:00—17:00 GMT — book a visit or send us a WhatsApp.",
   },
   {
-    question: "What is your design process timeline?",
+    question: "How long does an interior take?",
     answer:
-      "Project timelines vary based on scope and complexity. A typical residential project takes 6-12 months from initial concept to construction documentation. We work closely with clients to establish realistic timelines that allow for thoughtful design development.",
+      "A full interior for one of our homes typically runs 8—16 weeks from signed drawings to handover, depending on joinery and imported finishes. We confirm the schedule before work starts.",
   },
   {
-    question: "How do you approach sustainable design?",
+    question: "Can I change the interior of a model I buy?",
     answer:
-      "Sustainability is integral to our practice, not an add-on. We prioritize passive design strategies, material selection, energy efficiency, and longevity. Every project is designed to minimize environmental impact while maximizing occupant comfort and connection to nature.",
+      "Yes. Layouts, joinery, finishes and electrical plans can be adapted within the structure. We explain exactly what is fixed and what is open to choice at the design stage.",
   },
   {
-    question: "What services do you offer?",
+    question: "Do you design interiors for homes you did not build?",
     answer:
-      "We provide comprehensive architectural services including master planning, schematic design, design development, construction documentation, and construction administration. We can tailor our services to meet your project's specific needs.",
+      "Yes — we take on a limited number of interior-only projects each year, and we always begin with a site visit to measure and photograph what already exists.",
   },
   {
-    question: "Do you work with existing structures?",
+    question: "How do you keep interiors cool in Accra?",
     answer:
-      "Absolutely. We enjoy the challenge of adaptive reuse and renovation projects. Whether it's a historic preservation or a modern addition, we approach existing structures with respect while bringing them into dialogue with contemporary living.",
+      "Through design first: shading, cross ventilation, fan placement and thermal mass, supported by efficient air conditioning where it is genuinely needed.",
   },
   {
-    question: "How do we get started?",
+    question: "How do we start?",
     answer:
-      "Begin with an initial consultation where we discuss your vision, site, budget, and timeline. This helps us understand if we're the right fit for your project. From there, we'll outline a customized scope of work and fee proposal.",
+      "Begin with a consultation at the office or on site. Bring your plan, your budget and your timeline; we follow up with a scope and fee proposal.",
   },
 ]
 

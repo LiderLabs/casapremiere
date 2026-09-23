@@ -8,9 +8,9 @@ import "./globals.css"
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "CASA- INTERIOR",
+  title: "CASA Premier — Interiors",
   description:
-    "We design spaces that elevate living. A refined architectural experience where form, light, and intention meet.",
+    "Interior design by CASA Premier: space planning, bespoke joinery and material palettes for homes in Adjiringanor, Accra and across the estate.",
   generator: "v0.app",
   icons: {
   icon: ['/logowhite.png', '/logowhite.png'],   // (site): single-quoted, (interior): double-quoted to match each file's style

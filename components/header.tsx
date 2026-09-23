@@ -50,10 +50,10 @@ export function Header() {
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-10 md:flex">
           <Link
-            href="#technology"
+            href="#properties"
             className="text-sm transition-colors text-muted-foreground hover:text-foreground"
           >
-            Design
+            Properties
           </Link>
           <Link
             href="#gallery"
@@ -62,10 +62,10 @@ export function Header() {
             Gallery
           </Link>
           <Link
-            href="#accessories"
+            href="#services"
             className="text-sm transition-colors text-muted-foreground hover:text-foreground"
           >
-            Models
+            Services
           </Link>
           <Link
             href="#about"
@@ -83,7 +83,7 @@ export function Header() {
             href={`${SISTER_SITE_URL}/`}
             className="text-sm transition-colors text-muted-foreground hover:text-foreground"
           >
-            Interior
+            Interiors
           </a>
         </nav>
 
@@ -94,7 +94,7 @@ export function Header() {
             onClick={() => openBooking()}
             className="px-4 py-2 text-sm font-medium transition-all rounded-full bg-foreground text-background hover:opacity-80"
           >
-            Book a Visit
+            Book a Visit 
           </button>
         </div>
 
@@ -114,11 +114,11 @@ export function Header() {
         <div className="border-t border-border bg-background px-6 py-8 md:hidden rounded-b-2xl">
           <nav className="flex flex-col gap-6">
             <Link
-              href="#technology"
+              href="#properties"
               className="text-lg text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
-              Design
+              Properties
             </Link>
             <Link
               href="#gallery"
@@ -128,11 +128,11 @@ export function Header() {
               Gallery
             </Link>
             <Link
-              href="#accessories"
+              href="#services"
               className="text-lg text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
-              Models
+              Services
             </Link>
             <Link
               href="#about"
@@ -146,7 +146,7 @@ export function Header() {
               className="text-lg text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
-              Interior
+              Interiors
             </a>
             <Link
               href="#contact"
@@ -164,7 +164,7 @@ export function Header() {
               }}
               className="mt-4 bg-foreground px-5 py-3 text-center text-sm font-medium text-background rounded-full"
             >
-              Book a Visit
+              Book a Consultation
             </button>
           </nav>
         </div>

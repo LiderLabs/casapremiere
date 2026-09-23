@@ -2,37 +2,39 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { useBooking } from "@/components/booking/booking-provider";
 
 const word = "";
 
 const sideImages = [
   {
     src: "/images/hero-bg1.jpg",
-    alt: "Modern architecture with corten steel",
+    alt: "CASA Premier façade in corten steel, Adjiringanor, Accra",
     position: "left",
     span: 1,
   },
   {
     src: "/images/herobg2.jpg",
-    alt: "Aerial view of modern home",
+    alt: "Aerial view of the CASA Premier estate, Accra",
     position: "left",
     span: 1,
   },
   {
     src: "/images/herobg3.jpg",
-    alt: "Interior view with landscape",
+    alt: "Living space opening onto the garden, CASA Premier",
     position: "right",
     span: 1,
   },
   {
     src: "/images/herobg4.jpg",
-    alt: "Modern architecture at night",
+    alt: "CASA Premier home lit at dusk",
     position: "right",
     span: 1,
   },
 ];
 
 export function HeroSection() {
+  const { openBooking } = useBooking();
   const sectionRef = useRef<HTMLElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -149,7 +151,7 @@ export function HeroSection() {
               
               <Image
                 src="/images/casabuild.png"
-                alt="Modern architectural structure with reflection"
+                alt="CASA Premier home under construction, Accra"
                 fill
                 className="absolute inset-0 z-10 object-cover"
                 priority
@@ -195,10 +197,28 @@ export function HeroSection() {
         style={{ opacity: textOpacity }}
       >
         <p className="mx-auto max-w-2xl text-center text-2xl leading-relaxed text-white md:text-3xl lg:text-[2.5rem] lg:leading-snug">
-          Lightweight, durable
+           Designs crafted for modern living.
           <br />
-          and adventure-ready.
+          Built for generations.
         </p>
+
+        
+
+        <div className="pointer-events-auto mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row md:mt-8">
+          <a
+            href="#properties"
+            className="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-medium text-black transition-opacity hover:opacity-80 sm:w-auto"
+          >
+            Explore Our Properties
+          </a>
+          <button
+            type="button"
+            onClick={() => openBooking()}
+            className="inline-flex w-full items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-white/10 sm:w-auto"
+          >
+            Start a Project
+          </button>
+        </div>
       </div>
 
       {/* Scroll space to enable animation */}

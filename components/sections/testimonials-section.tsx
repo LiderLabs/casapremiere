@@ -9,7 +9,7 @@ export function TestimonialsSection() {
       <div className="relative aspect-[4/3] w-full sm:aspect-[16/9]">
         <Image
           src="/images/philosophy.jpg"
-          alt="Modern corten steel architecture in natural landscape"
+          alt="CASA Premier home in its landscape, Adjiringanor, Accra"
           fill
           className="object-cover"
         />
@@ -18,10 +18,16 @@ export function TestimonialsSection() {
         
         {/* Text Overlay */}
         <div className="absolute inset-0 flex items-end justify-center px-4 pb-10 sm:px-6 sm:pb-14 md:px-12 md:pb-24 lg:px-20 lg:pb-32">
-          <p className="mx-auto max-w-5xl text-lg leading-relaxed text-white sm:text-xl md:text-3xl lg:text-[2.5rem] lg:leading-snug text-center">
-            A passive house that combines contemporary design with environmental respect  
-            built for those who refuse to choose between modern comfort and ecological responsibility.
-          </p>
+          <div className="mx-auto max-w-5xl text-center">
+            <h2 className="text-2xl font-medium leading-snug text-white sm:text-3xl md:text-4xl lg:text-[3rem] lg:leading-tight">
+              Spaces Worth Coming Home To.
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-white/85 sm:text-lg md:text-xl lg:text-2xl">
+              We believe the spaces around us shape the way we experience life. That is why we create
+              properties and interiors that go beyond appearance — spaces with character, comfort and
+              lasting value.  
+            </p>
+          </div>
         </div>
       </div>
     </section>

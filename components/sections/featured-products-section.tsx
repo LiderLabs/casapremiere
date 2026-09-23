@@ -6,42 +6,52 @@ const features = [
   {
     image: "/images/featured4.jpg",
     span: "col-span-2 row-span-2", // Large
+    alt: "Façade detail, CASA Premier",
   },
   {
     image: "/images/featured2.jpg",
     span: "col-span-1 row-span-1", // Small
+    alt: "Site and landscape study",
   },
   {
     image: "/images/featured3.jpg",
     span: "col-span-1 row-span-1", // Small
+    alt: "Timber and concrete detail",
   },
   {
     image: "/images/featured4.jpg",
     span: "col-span-1 row-span-2", // Tall
+    alt: "Completed living room, CASA Premier",
   },
   {
     image: "/images/side2.jpg",
     span: "col-span-1 row-span-1", // Small
+    alt: "Terrace and garden",
   },
   {
     image: "/images/featured1.jpg",
     span: "col-span-2 row-span-1", // Wide
+    alt: "Roof and solar array",
   },
   {
     image: "/images/side1.jpg",
     span: "col-span-1 row-span-1", // Small
+    alt: "Model plan drawing",
   },
   {
     image: "/images/herobg2.jpg",
     span: "col-span-1 row-span-2", // Tall
+    alt: "Joinery detail",
   },
   {
     image: "/images/herobg3.jpg",
     span: "col-span-2 row-span-1", // Wide
+    alt: "Estate landscape at dusk",
   },
   {
     image: "/images/herobg4.jpg",
     span: "col-span-1 row-span-1", // Small
+    alt: "Water storage and services",
   },
 ];
 
@@ -58,7 +68,7 @@ export function FeaturedProductsSection() {
             >
               <FadeImage
                 src={feature.image || "/placeholder.svg"}
-                alt={`Architecture sketch ${index + 1}`}
+                alt={feature.alt}
                 fill
                 className="object-cover"
               />

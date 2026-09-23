@@ -1,32 +1,32 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Home, Building, Armchair, Trees } from "lucide-react"
+import { Ruler, Hammer, Palette, Sofa } from "lucide-react"
 import { HighlightedText } from "./highlighted-text"
 
 const expertiseAreas = [
   {
-    title: "Residential Design",
-    description: "Creating homes that balance beauty with livability, where every space serves both form and function.",
-    icon: Home,
-  },
-  {
-    title: "Commercial Architecture",
-    description:
-      "Designing workspaces that inspire productivity and reflect the values of forward-thinking organizations.",
-    icon: Building,
-  },
-  {
     title: "Interior Architecture",
-    description:
-      "Curating interiors that harmonize with their architectural shells, creating cohesive spatial experiences.",
-    icon: Armchair,
+    description: "Layouts, partitions, ceiling and lighting plans — the structure of a good interior, resolved on paper first.",
+    icon: Ruler,
   },
   {
-    title: "Urban Planning",
+    title: "Bespoke Joinery",
     description:
-      "Shaping communities through thoughtful integration of public spaces, structures, and natural elements.",
-    icon: Trees,
+      "Kitchens, wardrobes, vanities and built-in seating, made to the millimetre for the room they belong to.",
+    icon: Hammer,
+  },
+  {
+    title: "Material & Finish Palettes",
+    description:
+      "Flooring, paint, stone, metal and fabric schedules, coordinated with the architecture and the budget.",
+    icon: Palette,
+  },
+  {
+    title: "Furnishing & Styling",
+    description:
+      "Furniture selection and final styling, so a finished home is handed over ready to live in.",
+    icon: Sofa,
   },
 ]
 
@@ -66,8 +66,8 @@ export function Expertise() {
             through practice
           </h2>
           <p className="text-muted-foreground text-lg leading-relaxed">
-            Every project draws from decades of collective experience, resulting in architecture that is both innovative
-            and timeless.
+            Interiors are drawn with the same care as the building itself — by the studio that
+            designed the house.
           </p>
         </div>
 

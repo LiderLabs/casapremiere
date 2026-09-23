@@ -139,15 +139,15 @@ export function Hero() {
         }}
       >
         <div className="mb-72 md:mb-60 lg:mb-80">
-          <p className="text-sm tracking-[0.3em] uppercase text-center text-secondary mb-0">{"Architecture Studio"}</p>
+          <p className="text-sm tracking-[0.3em] uppercase text-center text-secondary mb-0">{"CASA Premier — Interior Design"}</p>
 
           <h1
             ref={titleRef}
             className="text-7xl font-medium text-balance text-center text-white mb-0 tracking-tight leading-[0.9] lg:text-8xl"
           >
-            {"We design spaces"}
+            {"Interiors designed"}
             <br />
-            <span className="text-orange-200">{"that elevate living"}</span>
+            <span className="text-orange-200">{"for the way you live"}</span>
           </h1>
         </div>
       </div>

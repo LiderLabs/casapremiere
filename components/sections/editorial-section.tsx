@@ -3,16 +3,13 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 
 const specs = [
-  { label: "Surface Area", value: "180m²" },
-  { label: "Energy Use", value: "15 kWh/m²" },
-  { label: "Solar Panels", value: "40 m²" },
-  { label: "Carbon Balance", value: "-20%" },
+  { label: "Luxury Homes", value: "Residential" },
+  { label: "Workspaces ", value: "Commercial" },
+  { label: "Complete Design Services", value: "Interior" },
+  { label: "End-to-End Projects", value: "Development" },
 ];
 
-// Casa Premier Homes on YouTube (channel UCEihlfk9yxRij_sWxeAd_OA).
-// A <video src> can only load a real media FILE (mp4/webm) — a youtube.com channel page is
-// HTML, which is why the previous <video src="https://www.youtube.com/@Casapremierhomes" />
-// rendered an empty box. YouTube content must be shown through an <iframe> pointed at /embed/.
+
 const YOUTUBE_VIDEO_ID = "vJlmnCnwPjk";
 
 // autoplay=1 only works together with mute=1 (browser autoplay policy);
@@ -95,13 +92,21 @@ export function EditorialSection() {
         >
           <iframe
             src={YOUTUBE_EMBED_SRC}
-            title="Casa Premier Homes — Prime Villas"
+            title="CASA Premier — a look around the estate"
             className="absolute inset-0 h-full w-full border-0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerPolicy="strict-origin-when-cross-origin"
             allowFullScreen
           />
         </div>
+      </div>
+
+      {/* Numbers heading */}
+      <div className="px-6 pt-20 md:px-12 md:pt-24 lg:px-20">
+        <p className="text-xs uppercase tracking-widest text-muted-foreground">At a Glance</p>
+        <h2 className="mt-4 mb-12 text-3xl font-medium tracking-tight text-foreground md:mb-16 md:text-4xl">
+          Experience, measured.
+        </h2>
       </div>
 
       {/* Specs Grid */}
