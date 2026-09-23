@@ -1,43 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { FadeImage } from "@/components/fade-image";
+import { useProperty } from "@/components/property/property-provider";
+import { PROPERTIES } from "@/lib/properties";
 
-const properties = [
-  {
-    id: 1,
-    name: "The Residence",
-    location: "adjiringanor, Accra",
-    meta: "Bedroom-",
-    description: "A contemporary residence combining generous living spaces, refined finishes and seamless indoor-outdoor living.",
-    price: "GH₵ --",
-    image: "/images/model1.jpg",
-    href: "#contact",
-  },
-  {
-    id: 2,
-    name: "The Premier home",
-    location: "Adjiringanor, Accra",
-    meta: "Bedroom--",
-    description: "Sophisticated city living with carefully considered interiors, premium finishes and exceptional attention to detail.",
-    price: "GH₵---",
-    image: "/images/mono_1.jpg",
-    href: "#contact",
-  },
-  {
-    id: 3,
-    name: "The Heights",
-    location: " Adjiringanor, Accra",
-    meta: "Bedrooms --",
-    description: "A modern private residence designed around natural light, privacy and effortless entertaining.",
-    price: "GH₵---",
-    image: "/images/hero-bg1.jpg",
-    href: "#contact",
-  },
-];
-
+// Property data lives in lib/properties.ts so the grid and the quick-view
+// drawer always agree.
 export function CollectionSection() {
+  const { openProperty } = useProperty();
+
   return (
     <section id="properties" className="bg-background">
       {/* Section Title */}
@@ -54,17 +26,22 @@ export function CollectionSection() {
       <div className="pb-24">
         {/* Mobile: Horizontal Carousel */}
         <div className="flex gap-6 overflow-x-auto px-6 pb-4 md:hidden snap-x snap-mandatory scrollbar-hide">
-          {properties.map((property) => (
+          {PROPERTIES.map((property) => (
             <div key={property.id} className="group flex-shrink-0 w-[75vw] snap-center">
               {/* Image */}
-              <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-secondary">
+              <button
+                type="button"
+                onClick={() => openProperty(property)}
+                aria-label={`View ${property.name}`}
+                className="relative block aspect-[2/3] w-full cursor-pointer overflow-hidden rounded-2xl bg-secondary"
+              >
                 <FadeImage
                   src={property.image || "/placeholder.svg"}
                   alt={property.name}
                   fill
                   className="object-cover group-hover:scale-105"
                 />
-              </div>
+              </button>
 
               {/* Content */}
               <div className="py-6">
@@ -79,13 +56,15 @@ export function CollectionSection() {
                     <p className="mt-2 text-sm text-muted-foreground">
                       {property.description}
                     </p>
-                    <Link
-                      href={property.href}
-                      className="mt-4 inline-flex items-center gap-1 text-sm text-foreground transition-opacity hover:opacity-70"
+                    <button
+                      type="button"
+                      onClick={() => openProperty(property)}
+                      aria-haspopup="dialog"
+                      className="mt-4 inline-flex cursor-pointer items-center gap-1 text-sm font-medium text-foreground underline-offset-4 group-hover:underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
                     >
                       View Property
                       <ArrowUpRight className="size-4" aria-hidden="true" />
-                    </Link>
+                    </button>
                   </div>
                   <span className="text-lg font-medium text-foreground">
                     {property.price}
@@ -98,17 +77,22 @@ export function CollectionSection() {
 
         {/* Desktop: Grid */}
         <div className="hidden md:grid md:grid-cols-3 gap-8 md:px-12 lg:px-20">
-          {properties.map((property) => (
+          {PROPERTIES.map((property) => (
             <div key={property.id} className="group">
               {/* Image */}
-              <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-secondary">
+              <button
+                type="button"
+                onClick={() => openProperty(property)}
+                aria-label={`View ${property.name}`}
+                className="relative block aspect-[2/3] w-full cursor-pointer overflow-hidden rounded-2xl bg-secondary"
+              >
                 <FadeImage
                   src={property.image || "/placeholder.svg"}
                   alt={property.name}
                   fill
                   className="object-cover group-hover:scale-105"
                 />
-              </div>
+              </button>
 
               {/* Content */}
               <div className="py-6">
@@ -123,13 +107,15 @@ export function CollectionSection() {
                     <p className="mt-2 text-sm text-muted-foreground">
                       {property.description}
                     </p>
-                    <Link
-                      href={property.href}
-                      className="mt-4 inline-flex items-center gap-1 text-sm text-foreground transition-opacity hover:opacity-70"
+                    <button
+                      type="button"
+                      onClick={() => openProperty(property)}
+                      aria-haspopup="dialog"
+                      className="mt-4 inline-flex cursor-pointer items-center gap-1 text-sm font-medium text-foreground underline-offset-4 group-hover:underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
                     >
                       View Property
                       <ArrowUpRight className="size-4" aria-hidden="true" />
-                    </Link>
+                    </button>
                   </div>
                   <span className="font-medium text-foreground text-2xl">
                     {property.price}

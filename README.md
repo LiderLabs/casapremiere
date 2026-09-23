@@ -133,6 +133,52 @@ already in place.
 The modal is loaded with `next/dynamic` on first open, so Radix Dialog,
 react-day-picker, react-hook-form and zod stay out of the initial page bundle.
 
+## Property quick-view drawer
+
+The "Featured Properties" cards open a **drawer** instead of navigating — a quick
+view that keeps the page (and the other homes) visible behind it.
+
+| Piece | Where |
+|---|---|
+| Property data (single source of truth) | `lib/properties.ts` |
+| Provider + `useProperty()` hook, lazy-mounts the drawer | `components/property/property-provider.tsx` |
+| The drawer: gallery, specs, amenities, host, pager | `components/property/property-drawer.tsx` |
+| Trigger | `components/sections/collection-section.tsx` (`View Property`, `aria-haspopup="dialog"`) |
+| Mounted in | `app/(site)/page.tsx`, inside `BookingProvider` |
+
+**Presentation:** a right-hand `Sheet` at ≥768px (page dimmed but visible behind —
+the "quick view" feel) and a full-screen bottom sheet on mobile. Both sit at
+`z-[60]` so they cover the fixed pill header.
+
+**Behaviour**
+
+- Loaded with `next/dynamic` on first open, so the drawer markup, gallery and
+  spec tables stay out of the initial page bundle.
+- **Deep link:** opening writes `?property=<slug>` with `history.replaceState`,
+  and the slug is read on load — so a quick view can be shared or reloaded.
+  Other params (e.g. `?book=1`) and the current hash are preserved.
+- **Book a viewing** closes the drawer, then opens the appointment modal
+  prefilled with `service: "Buy a property"` and `location: "<name>, <location>"`
+  (see `BookingPrefill` in `lib/booking.ts`). The delay matches the sheet's
+  300ms close transition so the two overlays never fight for focus.
+- The gallery's **Expand** button opens an in-panel viewer (arrows + close)
+  rather than a nested dialog, so only one overlay is ever open.
+- The drawer footer's pager walks between the properties without closing it.
+
+**Authoring content** — everything is in `lib/properties.ts`:
+
+- A `meta` or `price` string **with no digits** counts as unfinished: the drawer
+  hides it instead of showing a stray dash. Add the real figures and it appears.
+- Spec rows with an empty `value` are grouped into one "On request: …" line;
+  fill one in and it becomes its own row.
+- `image` is the card image, `hero` is the drawer's opening image, `gallery` is
+  the rest of the images.
+
+**Deliberately not included:** per-property URLs, metadata, sitemap entries and
+detail pages — this is a quick view, not a listing page. The card grid stays
+server-rendered, so each home's name, location, spec line and price are still in
+the initial HTML.
+
 ## History note
 
 The original two apps were `apps/interior` (Hously) and `apps/main-app`. `apps/interior` was removed after the merge was verified; it remains fully recoverable from git history (`git log --oneline -- apps/interior`, `git checkout <commit> -- apps/interior`).

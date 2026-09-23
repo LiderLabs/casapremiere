@@ -13,26 +13,29 @@ import { TestimonialsSection } from "@/components/sections/testimonials-section"
 import { FooterSection } from "@/components/sections/footer-section";
 import { ContactSection } from "@/components/sections/contact-section";
 import { BookingProvider } from "@/components/booking/booking-provider";
+import { PropertyProvider } from "@/components/property/property-provider";
 
 export default function Home() {
   return (
     <BookingProvider>
-      <main className="min-h-screen bg-background">
-        <Header />
-        <HeroSection />
-        <PhilosophySection />
-        <FeaturedProductsSection />
-        <TechnologySection />
-        <ServicesSection />
-        <GallerySection />
-        <CollectionSection />
-        <EditorialSection />
-        <ExteriorSection />
-        <ProcessSection />
-        <TestimonialsSection />
-        <ContactSection />
-        <FooterSection />
-      </main>
+      <PropertyProvider>
+        <main className="min-h-screen bg-background">
+          <Header />
+          <HeroSection />
+          <PhilosophySection />
+          <FeaturedProductsSection />
+          <TechnologySection />
+          <ServicesSection />
+          <GallerySection />
+          <CollectionSection />
+          <EditorialSection />
+          <ExteriorSection />
+          <ProcessSection />
+          <TestimonialsSection />
+          <ContactSection />
+          <FooterSection />
+        </main>
+      </PropertyProvider>
     </BookingProvider>
   );
 }

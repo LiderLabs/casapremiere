@@ -158,6 +158,10 @@ export type BookingMessageInput = {
  */
 export type BookingPrefill = {
   service?: BookingService;
+  /** Presets the "Project location" field - e.g. the property being viewed. */
+  location?: string;
+  /** Presets the notes field. */
+  notes?: string;
 };
 
 /**
