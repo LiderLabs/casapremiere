@@ -179,6 +179,60 @@ detail pages — this is a quick view, not a listing page. The card grid stays
 server-rendered, so each home's name, location, spec line and price are still in
 the initial HTML.
 
+## Before / after videos (`/interior`)
+
+The interior page carries one section — **The Transformation** — holding the two clips
+of the same rooms before and after the fit-out.
+
+| Piece | Where |
+|---|---|
+| Section (markup, playback, crossfade) | `components/before-after.tsx` |
+| Clip data — src, label, caption, optional poster | the `CLIPS` array in that file |
+| Media | `public/images/before.mp4`, `public/images/after.mp4` |
+| Rendered by | `app/(interior)/interior/page.tsx`, between `Projects` and `Expertise` |
+
+**One pinned stage, every width.** The section pins for 200svh on phones and 280vh from
+`lg` up. Nothing changes for the first 30% of the pinned scroll (the deliberate delay);
+at that point the phase latches to "after" and the two cards crossfade over 1.1s as a
+CSS transition — scroll *arms* the change, CSS performs it, which keeps it smooth on
+momentum scrolling. Scrolling back only leaves "after" below 20% (hysteresis), so a
+trackpad resting on the trigger cannot flicker between states. The rail is fed
+continuously by `--p`, and the week ticks (`0 · 3 · 8 · 14`) follow the same landmarks —
+week 8 sits exactly on the trigger, so the "after" clip reads as starting at week 8 and
+running through to handover.
+
+> The choreography is four constants at the top of `components/before-after.tsx`:
+> `HOLD_UNTIL`, `DISARM_AT`, `SETTLE_UNTIL` and `CROSSFADE_MS` — the last of which must
+> match the `duration-[1100ms]` class on the cards.
+
+**Reduced motion.** Every layout and motion value is a `motion-safe:*` class, so visitors
+who ask for less motion get the two cards stacked in normal flow at every width, with an
+IntersectionObserver playing whichever one is on screen — no pin, rail, ticks or touch
+toggle. The server-rendered HTML is already correct for both viewport and motion
+preference: no flash, no layout shift, no hydration mismatch.
+
+**Playback.** Both clips are muted, looping and `playsInline`. The "before" clip is
+`preload="metadata"`; the 30MB "after" clip stays unloaded (`preload="none"` and no `src`
+attribute at all) until the visitor is 15% into the pin, then switches to
+`preload="auto"`, so its first frame is painted before the crossfade reaches it. Playback
+stops when the section leaves the viewport or the tab is hidden, and every card has a
+pause/play button — required by WCAG 2.2.2 for motion that runs longer than five seconds,
+and the fallback when a browser blocks autoplay. A poster is optional: add
+`poster: "/images/<frame>.jpg"` to a clip in `CLIPS` and it is used as the still until the
+video paints.
+
+**Details worth keeping.** The pin window is measured from the sticky wrapper rather than
+`window.innerHeight`, because the mobile URL bar changing height would otherwise move the
+trigger mid-scroll. Touch devices also get a `Before | After` toggle
+(`motion-safe:pointer-coarse:flex`) that latches a phase and hands control back once the
+visitor scrolls 8% against it. A reload part-way down the section is *placed* in the right
+state instead of animating into it. The stage is full-bleed on phones and a height-driven
+16:9 box from `lg` up, and both sources are 848px wide, so nothing is upscaled past ~1.2×.
+
+**Asset note.** Both files are 848px-wide H.264 with the `moov` atom at the end of the
+file. A `-movflags +faststart` remux plus a CRF ~26 re-encode would take the pair from
+~45MB to ~15MB and let the first frame appear sooner; the section works as-is without it.
+
 ## History note
 
 The original two apps were `apps/interior` (Hously) and `apps/main-app`. `apps/interior` was removed after the merge was verified; it remains fully recoverable from git history (`git log --oneline -- apps/interior`, `git checkout <commit> -- apps/interior`).

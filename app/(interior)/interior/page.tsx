@@ -4,6 +4,7 @@ import { Philosophy } from "@/components/philosophy"
 import { Projects } from "@/components/projects"
 import { Expertise } from "@/components/expertise"
 import { FAQ } from "@/components/faq"
+import { BeforeAfter } from "@/components/before-after"
 import { InteriorSection } from "@/components/interior-section"
 import { CallToAction } from "@/components/call-to-action"
 import { Footer } from "@/components/footer"
@@ -15,6 +16,7 @@ export default function Home() {
       <Hero />
       <Philosophy />
       <Projects />
+      <BeforeAfter />
       <Expertise />
       <FAQ />
       <InteriorSection />
