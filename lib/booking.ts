@@ -165,6 +165,37 @@ export type BookingPrefill = {
 };
 
 /**
+ * Reads a `BookingPrefill` out of a query string.
+ *
+ * This is what makes a cross-site link land ready to send. `/interior/?book=1`
+ * opens the modal empty, which means the visitor retypes what the link already
+ * knew; `?book=1&service=Interior+design&location=<a home>` opens it filled in.
+ * See `lib/cross-sell.ts` for the links that build those URLs.
+ *
+ * `service` is checked against `BOOKING_SERVICES` and anything unrecognised is
+ * dropped rather than passed on: the value arrives from a URL, so it must not
+ * reach the form's select unvalidated.
+ */
+export function bookingPrefillFromSearch(
+  search: URLSearchParams,
+): BookingPrefill | undefined {
+  const prefill: BookingPrefill = {};
+
+  const service = search.get("service")?.trim();
+  if (service && (BOOKING_SERVICES as readonly string[]).includes(service)) {
+    prefill.service = service as BookingService;
+  }
+
+  const location = search.get("location")?.trim();
+  if (location) prefill.location = location;
+
+  const notes = search.get("notes")?.trim();
+  if (notes) prefill.notes = notes;
+
+  return Object.keys(prefill).length > 0 ? prefill : undefined;
+}
+
+/**
  * Plain-text summary of a booking request. Used for the WhatsApp hand-off while
  * online submission is disabled - nothing leaves the browser unless the visitor
  * chooses to send it.

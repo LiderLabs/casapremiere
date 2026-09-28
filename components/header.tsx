@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
-import { SISTER_SITE_URL } from "@/lib/site-links";
+import { CrossSiteLink } from "@/components/cross-site-link";
 import { useBooking } from "@/components/booking/booking-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -48,7 +49,9 @@ export function Header() {
 
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-10 md:flex">
+        {/* gap-7 rather than gap-10 keeps the six links plus the theme toggle
+            inside the pill's max-w-3xl at every desktop width. */}
+        <nav className="hidden items-center gap-7 md:flex">
           <Link
             href="#properties"
             className="text-sm transition-colors text-muted-foreground hover:text-foreground"
@@ -79,16 +82,21 @@ export function Header() {
           >
             Contact
           </Link>
-          <a
-            href={`${SISTER_SITE_URL}/`}
+          {/* Into the interiors site. CrossSiteLink renders the same anchor and
+              reports the click, so this surface can be ranked against the
+              footer links and the interiors band. */}
+          <CrossSiteLink
+            target="interior"
+            surface="estate-header"
             className="text-sm transition-colors text-muted-foreground hover:text-foreground"
           >
             Interiors
-          </a>
+          </CrossSiteLink>
         </nav>
 
         {/* CTA */}
-        <div className="hidden items-center gap-6 md:flex">
+        <div className="hidden items-center gap-4 md:flex">
+          <ThemeToggle />
           <button
             type="button"
             onClick={() => openBooking()}
@@ -141,13 +149,14 @@ export function Header() {
             >
               About
             </Link>
-            <a
-              href={`${SISTER_SITE_URL}/`}
+            <CrossSiteLink
+              target="interior"
+              surface="estate-header-menu"
               className="text-lg text-foreground"
-              onClick={() => setIsMenuOpen(false)}
+              onNavigate={() => setIsMenuOpen(false)}
             >
               Interiors
-            </a>
+            </CrossSiteLink>
             <Link
               href="#contact"
               className="text-lg text-foreground"
@@ -155,6 +164,11 @@ export function Header() {
             >
               Contact
             </Link>
+
+            <div className="flex items-center justify-between border-t border-border pt-6">
+              <span className="text-lg text-foreground">Appearance</span>
+              <ThemeToggle className="size-10" />
+            </div>
 
             <button
               type="button"

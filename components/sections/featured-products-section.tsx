@@ -64,7 +64,7 @@ export function FeaturedProductsSection() {
           {features.map((feature, index) => (
             <div 
               key={index} 
-              className={`relative overflow-hidden rounded-lg border border-gray-200 ${feature.span}`}
+              className={`relative overflow-hidden rounded-lg border border-gray-200 dark:border-border ${feature.span}`}
             >
               <FadeImage
                 src={feature.image || "/placeholder.svg"}

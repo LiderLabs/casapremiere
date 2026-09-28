@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Phone, MapPin, Check } from "lucide-react";
+import { Mail, Phone, MapPin, Check, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useBooking } from "@/components/booking/booking-provider";
+import { useMortgage } from "@/components/mortgage/mortgage-provider";
 import { BOOKING_SERVICES } from "@/lib/booking";
 import {
   Select,
@@ -67,6 +68,7 @@ const contactDetails = [
 export function ContactSection() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { openBooking } = useBooking();
+  const { openCalculator } = useMortgage();
 
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
@@ -130,14 +132,25 @@ export function ContactSection() {
               ))}
             </ul>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => openBooking()}
-              className="mt-10 rounded-full"
-            >
-              Prefer to book a Visit?
-            </Button>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => openBooking()}
+                className="rounded-full"
+              >
+                Prefer to book a Visit?
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => openCalculator()}
+                className="rounded-full"
+              >
+                <Calculator className="size-4" aria-hidden="true" />
+                Work out the monthly
+              </Button>
+            </div>
           </div>
 
           {/* Contact Form */}

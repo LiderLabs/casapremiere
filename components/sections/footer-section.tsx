@@ -1,14 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { SISTER_SITE_URL } from "@/lib/site-links";
+import { CrossSiteLink } from "@/components/cross-site-link";
 import { useBooking } from "@/components/booking/booking-provider";
+import type { CrossSellSurface, CrossSiteTarget } from "@/lib/cross-sell";
 
 type FooterLink = {
   label: string;
   href?: string;
   /** Opens the appointment booking modal instead of navigating. */
   action?: "book";
+  /**
+   * Leaves for the other site. CrossSiteLink renders the anchor the plain
+   * `href={`${SISTER_SITE_URL}/`}` used to be, plus the click report that says
+   * which of the footer columns actually earns the traffic.
+   */
+  crossSite?: { target: CrossSiteTarget; surface: CrossSellSurface };
 };
 
 const footerLinks: {
@@ -20,7 +27,7 @@ const footerLinks: {
     { label: "Properties", href: "#properties" },
     { label: "Gallery", href: "#gallery" },
     { label: "Developments", href: "#services" },
-    { label: "Interior Design", href: `${SISTER_SITE_URL}/` },
+    { label: "Interior Design", crossSite: { target: "interior", surface: "estate-footer-explore" } },
   ],
   about: [
     { label: "About Us", href: "#about" },
@@ -30,7 +37,7 @@ const footerLinks: {
   ],
   service: [
     { label: "Real Estate", href: "#properties" },
-    { label: "Interior Design", href: `${SISTER_SITE_URL}/` },
+    { label: "Interior Design", crossSite: { target: "interior", surface: "estate-footer-services" } },
     { label: "Property Development", href: "#services" },
     { label: "Renovation & Styling", href: "#contact" },
     { label: "Book a consultation", action: "book" },
@@ -52,6 +59,14 @@ function FooterLinkList({ links }: { links: FooterLink[] }) {
             >
               {link.label}
             </button>
+          ) : link.crossSite ? (
+            <CrossSiteLink
+              target={link.crossSite.target}
+              surface={link.crossSite.surface}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </CrossSiteLink>
           ) : (
             <Link
               href={link.href ?? "#"}

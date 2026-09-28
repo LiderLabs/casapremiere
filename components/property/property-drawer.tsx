@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { track } from "@vercel/analytics";
 import {
   ArrowUpRight,
+  Calculator,
   ChevronLeft,
   ChevronRight,
   Lamp,
@@ -16,7 +18,9 @@ import {
   X,
 } from "lucide-react";
 
+import { CrossSiteLink } from "@/components/cross-site-link";
 import { FadeImage } from "@/components/fade-image";
+import { ShortlistHeart } from "@/components/property/shortlist-heart";
 import {
   Sheet,
   SheetClose,
@@ -27,8 +31,18 @@ import {
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/components/ui/use-mobile";
 import { useBooking } from "@/components/booking/booking-provider";
+import { useMortgage } from "@/components/mortgage/mortgage-provider";
 import { BOOKING_PHONE_HREF, bookingWhatsAppHref } from "@/lib/booking";
-import { PROPERTIES, PROPERTY_HOST, type Property } from "@/lib/properties";
+import {
+  CROSS_SELL_BOOKING_EVENT,
+  crossSellBookingAnalyticsProps,
+} from "@/lib/cross-sell";
+import {
+  PROPERTIES,
+  PROPERTY_HOST,
+  getPropertyPriceValue,
+  type Property,
+} from "@/lib/properties";
 import { cn } from "@/lib/utils";
 
 const HIGHLIGHT_ICONS = {
@@ -71,6 +85,7 @@ export function PropertyDrawer({
 }: PropertyDrawerProps) {
   const isMobile = useIsMobile();
   const { openBooking } = useBooking();
+  const { openCalculator } = useMortgage();
   const [imageIndex, setImageIndex] = useState(0);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
@@ -112,6 +127,50 @@ export function PropertyDrawer({
     // fight for focus, then open the appointment modal with the property preset.
     window.setTimeout(
       () => openBooking({ service: "Buy a property", location: viewingContext }),
+      300,
+    );
+  };
+
+  /**
+   * The calculator opens as its own dialog, so the sheet closes first for the
+   * same reason. The home's own figures travel with the hand-off - and while
+   * `price` is still a placeholder this passes nothing, which the calculator
+   * handled by starting from its neutral default.
+   */
+  const estimateMonthly = () => {
+    onOpenChange(false);
+    setViewerIndex(null);
+    window.setTimeout(
+      () =>
+        openCalculator({
+          initialPrice: getPropertyPriceValue(property.price),
+          propertyContext: viewingContext,
+        }),
+      300,
+    );
+  };
+
+  /**
+   * Cross-sell into the interiors side of the same studio, in place: the visitor
+   * is already looking at one of our homes, so the appointment modal opens
+   * preset to interior design with this property as the project location -
+   * nothing to retype. Same close-then-open sequence as `bookViewing`, so the
+   * two overlays never fight for focus.
+   */
+  const designInterior = () => {
+    onOpenChange(false);
+    setViewerIndex(null);
+    track(
+      CROSS_SELL_BOOKING_EVENT,
+      crossSellBookingAnalyticsProps("estate-drawer", "Interior design"),
+    );
+    window.setTimeout(
+      () =>
+        openBooking({
+          service: "Interior design",
+          location: viewingContext,
+          notes: "Interior design package for this home.",
+        }),
       300,
     );
   };
@@ -223,6 +282,27 @@ export function PropertyDrawer({
               <p className="text-2xl font-medium text-foreground">{property.price}</p>
             ) : null}
 
+            <div
+              className={cn(
+                "flex flex-wrap items-center gap-2",
+                hasFigure(property.price) ? "mt-5" : "mt-1",
+              )}
+            >
+              <ShortlistHeart
+                slug={property.slug}
+                name={property.name}
+                variant="labelled"
+              />
+              <button
+                type="button"
+                onClick={estimateMonthly}
+                className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+              >
+                <Calculator className="size-4" aria-hidden="true" />
+                Estimate the monthly
+              </button>
+            </div>
+
             <h3 className="mt-8 text-xs uppercase tracking-widest text-muted-foreground">
               About this property
             </h3>
@@ -234,6 +314,38 @@ export function PropertyDrawer({
                 {paragraph}
               </p>
             ))}
+
+            {/* Cross-sell into the interiors side of the studio. It sits with the
+                home's story rather than in the sticky actions, which stay
+                purchase-only: the visitor has just read what the house is, and
+                this is the same team offering to finish it. */}
+            <div className="mt-10 rounded-2xl border border-border bg-secondary/50 p-5">
+              <h3 className="text-xs uppercase tracking-widest text-muted-foreground">
+                Interiors
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                This home can be handed over furnished. Joinery, kitchen, wardrobes
+                and finishes are designed by our interiors studio — the same team, on
+                the same drawings.
+              </p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={designInterior}
+                  className="flex-1 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background transition-opacity hover:opacity-80"
+                >
+                  Design the interior
+                </button>
+                <CrossSiteLink
+                  target="interior"
+                  surface="estate-drawer"
+                  service="Interior design"
+                  className="inline-flex flex-1 items-center justify-center rounded-full border border-border px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+                >
+                  See our interiors
+                </CrossSiteLink>
+              </div>
+            </div>
 
             <h3 className="mt-10 text-xs uppercase tracking-widest text-muted-foreground">
               Highlights

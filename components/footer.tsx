@@ -1,6 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
-import { MAIN_SITE_URL } from "@/lib/site-links"
+import { CrossSiteLink } from "@/components/cross-site-link"
+import { INTERIOR_HOME } from "@/lib/site-links"
 
 export function Footer() {
   return (
@@ -9,7 +10,7 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-12 mb-16">
           {/* Brand */}
           <div className="md:col-span-2">
-            <Link href="/" className="inline-block mb-6">
+            <Link href={INTERIOR_HOME} className="inline-block mb-6">
               <Image src="/images/casa01.svg" alt="CASA Premier" width={120} height={60} className="w-auto h-10" />
             </Link>
             <p className="text-muted-foreground leading-relaxed max-w-sm">
@@ -43,9 +44,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href={`${MAIN_SITE_URL}/`} className="hover:text-foreground transition-colors">
+                <CrossSiteLink
+                  target="estate"
+                  surface="interior-footer"
+                  className="hover:text-foreground transition-colors"
+                >
                   Exterior
-                </a>
+                </CrossSiteLink>
               </li>
             </ul>
           </div>

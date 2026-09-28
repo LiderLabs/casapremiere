@@ -1,13 +1,31 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { Plus } from "lucide-react"
 
-const faqs = [
+import { CrossSiteLink } from "@/components/cross-site-link"
+
+/**
+ * Answers may carry links, so the array is typed rather than inferred - the
+ * estate answer is the interior site's only in-copy route to the properties.
+ */
+const faqs: { question: string; answer: ReactNode }[] = [
   {
     question: "Where is CASA Premier Estate?",
-    answer:
-      "The estate is in Adjiringanor, Accra, and our studio works from the same address. Visits are by appointment Monday to Friday, 09:00—17:00 GMT — book a visit or send us a WhatsApp.",
+    answer: (
+      <>
+        The estate is in Adjiringanor, Accra, and our studio works from the same
+        address. Visits are by appointment Monday to Friday, 09:00—17:00 GMT —{" "}
+        <CrossSiteLink
+          target="estate"
+          surface="interior-faq"
+          className="text-foreground underline underline-offset-4 transition-opacity hover:opacity-70"
+        >
+          see the homes on the estate site
+        </CrossSiteLink>{" "}
+        or send us a WhatsApp.
+      </>
+    ),
   },
   {
     question: "How long does an interior take?",

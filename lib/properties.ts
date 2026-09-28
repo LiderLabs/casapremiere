@@ -246,3 +246,29 @@ export function getPropertyBySlug(slug: string): Property | undefined {
   return PROPERTIES.find((property) => property.slug === slug);
 }
 
+/**
+ * The number behind a display price, or `undefined` while it is still a
+ * placeholder.
+ *
+ * This follows the same rule the drawer applies ("a price with no digits is
+ * unfinished"), so `"GH₵ --"` yields nothing and the affordability calculator
+ * opens with an empty field rather than a guess.
+ *
+ * Only plain digit groups are accepted - `"GH₵ 2,400,000"` and `"2.400.000"`
+ * both parse, but a shorthand such as `"GH₵ 2.4M"` is deliberately refused
+ * rather than interpreted, so the calculator never starts from a wrong number.
+ */
+export function getPropertyPriceValue(price: string): number | undefined {
+  if (!/\d/.test(price)) return undefined;
+
+  const digits = price.replace(/GH₵|GH¢|GHS/gi, "").replace(/\s/g, "");
+
+  if (!/^\d{1,3}(?:[,.]\d{3})*$/.test(digits) && !/^\d+$/.test(digits)) {
+    return undefined;
+  }
+
+  const value = Number(digits.replace(/[,.]/g, ""));
+  return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+

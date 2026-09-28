@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FadeImage } from "@/components/fade-image";
-import { SISTER_SITE_URL } from "@/lib/site-links";
+import { CrossSiteLink } from "@/components/cross-site-link";
 
 export function ExteriorSection() {
   return (
@@ -32,12 +32,13 @@ export function ExteriorSection() {
               together. From contemporary minimalism to warm, sophisticated interiors, we
               create environments that reflect the people who live, work and gather in them.
             </p>
-            <a
-              href={`${SISTER_SITE_URL}/`}
+            <CrossSiteLink
+              target="interior"
+              surface="estate-band"
               className="mt-8 inline-block rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-all hover:opacity-80"
             >
               Explore Our Interiors
-            </a>
+            </CrossSiteLink>
           </div>
         </div>
       </div>

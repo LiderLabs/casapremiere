@@ -2,6 +2,7 @@
 
 import { ArrowUpRight } from "lucide-react";
 import { FadeImage } from "@/components/fade-image";
+import { ShortlistHeart } from "@/components/property/shortlist-heart";
 import { useProperty } from "@/components/property/property-provider";
 import { PROPERTIES } from "@/lib/properties";
 
@@ -27,7 +28,7 @@ export function CollectionSection() {
         {/* Mobile: Horizontal Carousel */}
         <div className="flex gap-6 overflow-x-auto px-6 pb-4 md:hidden snap-x snap-mandatory scrollbar-hide">
           {PROPERTIES.map((property) => (
-            <div key={property.id} className="group flex-shrink-0 w-[75vw] snap-center">
+            <div key={property.id} className="group relative flex-shrink-0 w-[75vw] snap-center">
               {/* Image */}
               <button
                 type="button"
@@ -42,6 +43,15 @@ export function CollectionSection() {
                   className="object-cover group-hover:scale-105"
                 />
               </button>
+
+              {/* Sibling of the image button, not nested: interactive elements
+                  cannot be nested, and the card opens the drawer on its own. */}
+              <ShortlistHeart
+                slug={property.slug}
+                name={property.name}
+                overlay
+                className="absolute top-3 right-3 z-10"
+              />
 
               {/* Content */}
               <div className="py-6">
@@ -78,7 +88,7 @@ export function CollectionSection() {
         {/* Desktop: Grid */}
         <div className="hidden md:grid md:grid-cols-3 gap-8 md:px-12 lg:px-20">
           {PROPERTIES.map((property) => (
-            <div key={property.id} className="group">
+            <div key={property.id} className="group relative">
               {/* Image */}
               <button
                 type="button"
@@ -93,6 +103,13 @@ export function CollectionSection() {
                   className="object-cover group-hover:scale-105"
                 />
               </button>
+
+              <ShortlistHeart
+                slug={property.slug}
+                name={property.name}
+                overlay
+                className="absolute top-3 right-3 z-10"
+              />
 
               {/* Content */}
               <div className="py-6">

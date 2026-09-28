@@ -5,8 +5,28 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { MAIN_SITE_URL } from "@/lib/site-links"
+import { CrossSiteLink } from "@/components/cross-site-link"
+import { INTERIOR_HOME } from "@/lib/site-links"
 import Image from "next/image"
+
+type NavItem =
+  | { label: string; href: string; crossSite?: false }
+  | { label: string; crossSite: true }
+
+/**
+ * One nav list for both menus. The desktop and mobile versions used to carry
+ * their own inline copies, which is how a link quietly goes missing on one of
+ * them. `crossSite` items leave for the estate site and are rendered by
+ * CrossSiteLink, so a click on either menu is countable.
+ */
+const NAV_ITEMS: NavItem[] = [
+  { label: "Home", href: "#hero" },
+  { label: "Philosophy", href: "#about" },
+  { label: "Interiors", href: "#projects" },
+  { label: "What we do", href: "#services" },
+  { label: "FAQ", href: "#faq" },
+  { label: "Exterior", crossSite: true },
+]
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false)
@@ -39,26 +59,30 @@ export function Header() {
       )}
     >
       <nav className="container mx-auto px-6 flex items-center justify-between md:px-[24]">
-        <Link href="/" className="flex items-center gap-2 group" onClick={scrollToTop}>
+        <Link href={INTERIOR_HOME} className="flex items-center gap-2 group" onClick={scrollToTop}>
           <Image src="/images/casa.svg" alt="CASA Premier" width={120} height={32} className="w-auto h-10" />
         </Link>
 
         <ul className="hidden md:flex items-center gap-10 text-sm tracking-wide">
-          {[
-            { label: "Home", href: "#hero" },
-            { label: "Philosophy", href: "#about" },
-            { label: "Interiors", href: "#projects" },
-            { label: "What we do", href: "#services" },
-            { label: "FAQ", href: "#faq" },
-            { label: "Exterior", href: `${MAIN_SITE_URL}/` },
-          ].map((item) => (
+          {NAV_ITEMS.map((item) => (
             <li key={item.label}>
-              <Link
-                href={item.href}
-                className="hover:text-[rgb(251,146,60)] transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-[rgb(251,146,60)] after:transition-all after:duration-300 text-white"
-              >
-                {item.label}
-              </Link>
+              {item.crossSite ? (
+                /* Into the estate site: same anchor, plus the click report. */
+                <CrossSiteLink
+                  target="estate"
+                  surface="interior-header"
+                  className="hover:text-[rgb(251,146,60)] transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-[rgb(251,146,60)] after:transition-all after:duration-300 text-white"
+                >
+                  {item.label}
+                </CrossSiteLink>
+              ) : (
+                <Link
+                  href={item.href}
+                  className="hover:text-[rgb(251,146,60)] transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 hover:after:w-full after:bg-[rgb(251,146,60)] after:transition-all after:duration-300 text-white"
+                >
+                  {item.label}
+                </Link>
+              )}
             </li>
           ))}
         </ul>
@@ -102,22 +126,26 @@ export function Header() {
       >
         <div className="container mx-auto px-6">
           <ul className="flex flex-col gap-6 mb-8">
-            {[
-              { label: "Home", href: "#hero" },
-              { label: "Philosophy", href: "#about" },
-              { label: "Interiors", href: "#projects" },
-              { label: "What we do", href: "#services" },
-              { label: "FAQ", href: "#faq" },
-              { label: "Exterior", href: `${MAIN_SITE_URL}/` },
-            ].map((item) => (
+            {NAV_ITEMS.map((item) => (
               <li key={item.label}>
-                <Link
-                  href={item.href}
-                  className="hover:text-[rgb(251,146,60)] transition-colors duration-300 text-white text-4xl font-light block"
-                  onClick={closeMobileMenu}
-                >
-                  {item.label}
-                </Link>
+                {item.crossSite ? (
+                  <CrossSiteLink
+                    target="estate"
+                    surface="interior-header-menu"
+                    className="hover:text-[rgb(251,146,60)] transition-colors duration-300 text-white text-4xl font-light block"
+                    onNavigate={closeMobileMenu}
+                  >
+                    {item.label}
+                  </CrossSiteLink>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className="hover:text-[rgb(251,146,60)] transition-colors duration-300 text-white text-4xl font-light block"
+                    onClick={closeMobileMenu}
+                  >
+                    {item.label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

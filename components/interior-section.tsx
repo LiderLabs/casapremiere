@@ -1,7 +1,6 @@
-import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight } from "lucide-react"
-import { MAIN_SITE_URL } from "@/lib/site-links"
+import { CrossSiteLink } from "@/components/cross-site-link"
 
 export function InteriorSection() {
   return (
@@ -33,13 +32,14 @@ export function InteriorSection() {
               architecture studio in Adjiringanor, Accra.
             </p>
 
-            <a
-              href={`${MAIN_SITE_URL}/`}
+            <CrossSiteLink
+              target="estate"
+              surface="interior-band"
               className="inline-flex items-center gap-3 bg-white text-foreground border border-foreground/20 px-8 py-4 text-sm tracking-wide hover:bg-foreground hover:text-white transition-colors duration-300 group"
             >
               Explore the Estate
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-            </a>
+            </CrossSiteLink>
           </div>
         </div>
       </div>

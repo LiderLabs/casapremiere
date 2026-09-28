@@ -6,6 +6,7 @@ import { Expertise } from "@/components/expertise"
 import { FAQ } from "@/components/faq"
 import { BeforeAfter } from "@/components/before-after"
 import { InteriorSection } from "@/components/interior-section"
+import { HomesWeDesign } from "@/components/interior-homes"
 import { CallToAction } from "@/components/call-to-action"
 import { Footer } from "@/components/footer"
 
@@ -20,6 +21,10 @@ export default function Home() {
       <Expertise />
       <FAQ />
       <InteriorSection />
+      {/* Cross-sell into the estate side. It follows the "See the architecture"
+          band, which sets up the buildings, and lands the visitor on a specific
+          home rather than a homepage. */}
+      <HomesWeDesign />
       <CallToAction />
       <Footer />
     </main>

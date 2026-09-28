@@ -76,9 +76,70 @@ Any Node 20+ host works with defaults: `npm run build && npm start` (single port
 
 ## Cross-site links
 
-- Main site → interior: `SISTER_SITE_URL` from `lib/site-links.ts` (resolves to `/interior/`)
-- Interior → main: `MAIN_SITE_URL` (resolves to `/`)
-- These are relative paths, so they work on any domain without configuration.
+Both sites live in one app, so a "cross-site" link is just a route. Those links
+are **not** hand-written any more — they go through one module so the paths stay
+consistent, the visitor's context survives the jump, and every click is
+countable.
+
+| Piece | Where |
+|---|---|
+| Destination, attribution and the surface vocabulary | `lib/cross-sell.ts` |
+| The link itself (renders the anchor, reports the click) | `components/cross-site-link.tsx` |
+| Landing context read on arrival (`?book=1&service=…`) | `bookingPrefillFromSearch()` in `lib/booking.ts`, called by `components/booking/booking-provider.tsx` |
+
+```ts
+crossSiteHref("interior", { surface: "estate-drawer", service: "Interior design" });
+// → /interior/?src=estate-drawer&service=Interior+design
+```
+
+**Why `?src=`.** Both sites answer on the same origin, so the referrer is
+useless — `?src=<surface>` is the only signal that separates a cross-sell click
+from an ordinary page view. `CrossSellSurface` is a closed union rather than
+free text precisely so `estate-drawer` and `estate-footer` can be compared. The
+same click also fires the Vercel Analytics event `cross_site_click` with
+`{ surface, target }` (`?service`/`?property` where relevant).
+
+**Where the links are.** Estate → interiors: header (desktop + mobile menu),
+footer (Explore and Services columns), the "The Interior" band, the property
+drawer, and the home cards in the interiors page's estate band. Interiors →
+estate: header (desktop + mobile), footer, the "The Exterior" band, the FAQ
+answer about the estate, and each card in "The homes we design for".
+
+**Landing context.** A cross-site link can arrive with `?service=`,
+`?location=` and `?notes=`, which `BookingProvider` reads on load and passes to
+the modal — so `/interior/?book=1&service=Interior+design` opens the appointment
+form already filled in. `service` is validated against `BOOKING_SERVICES` before
+it reaches the form, because the value comes from a URL.
+
+**In-place hand-offs.** Three estate surfaces offer the interiors service
+without navigating at all — the property drawer, the shortlist panel and the
+affordability dialog. Those open the appointment modal preset to
+`Interior design` (with the property or the whole shortlist in the notes) and
+report the `cross_sell_booking` event, which is what shows whether someone
+looking at a home actually asked us to fit it out.
+
+**A site's own logo is not a cross-site link.** `INTERIOR_HOME` in
+`lib/site-links.ts` exists because both original apps answered on `/`: inside the
+interiors pages, `href="/"` silently became a link to the estate (and the
+interiors footer logo did exactly that). Use `INTERIOR_HOME` for a logo or "back
+to the top of this site"; `SISTER_SITE_URL`/`MAIN_SITE_URL` mean the *other* site.
+
+## The homes we design for (`/interior`)
+
+The interior page carries one band — **The homes we design for** — that hands the
+visitor to the estate side.
+
+| Piece | Where |
+|---|---|
+| Section | `components/interior-homes.tsx` |
+| Property data | `lib/properties.ts` — the same file the estate's grid and quick-view drawer read |
+| Rendered by | `app/(interior)/interior/page.tsx`, between `InteriorSection` and `CallToAction` |
+
+Each card lands on `/?property=<slug>`, which the estate's `PropertyProvider`
+reads on load and opens directly, so the visitor arrives at the home itself
+rather than at a hero with a scroll to find. Prices use the estate's own rule: a
+price string with no digits is still a placeholder and stays hidden
+(`getPropertyPriceValue()` in `lib/properties.ts`).
 
 ## Appointment booking
 

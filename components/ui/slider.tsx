@@ -11,6 +11,13 @@ function Slider({
   value,
   min = 0,
   max = 100,
+  // Radix puts the slider role on the thumb, not on this wrapper, so the
+  // accessible name and value text have to be forwarded down - otherwise every
+  // thumb is announced as an unlabelled slider. With a single thumb these three
+  // props describe the slider itself, which is how callers read them.
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
+  'aria-valuetext': ariaValueText,
   ...props
 }: React.ComponentProps<typeof SliderPrimitive.Root>) {
   const _values = React.useMemo(
@@ -53,7 +60,10 @@ function Slider({
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
-          className="border-primary ring-ring/50 block size-4 shrink-0 rounded-full border bg-white shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabelledBy}
+          aria-valuetext={ariaValueText}
+          className="border-primary ring-ring/50 block size-4 shrink-0 rounded-full border bg-white shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 dark:bg-background"
         />
       ))}
     </SliderPrimitive.Root>

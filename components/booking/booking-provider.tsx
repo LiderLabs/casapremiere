@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import dynamic from "next/dynamic";
-import type { BookingPrefill } from "@/lib/booking";
+import { bookingPrefillFromSearch, type BookingPrefill } from "@/lib/booking";
 
 // Loaded on first open so the dialog, calendar and form code stay out of the
 // initial page bundle - the header trigger is always rendered, so this keeps
@@ -41,12 +41,17 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
   const closeBooking = useCallback(() => setIsOpen(false), []);
 
-  // Deep links: /#book or /?book=1 open the modal directly.
+  // Deep links: /#book or /?book=1 open the modal directly. Any context the link
+  // carried (?service=, ?location=, ?notes=) opens it already filled in - that is
+  // how a cross-site link hands the visitor over mid-thought instead of dropping
+  // them on a hero to start again. See lib/cross-sell.ts.
   useEffect(() => {
     const { hash, search } = window.location;
-    if (hash === "#book" || new URLSearchParams(search).get("book") === "1") {
-      openBooking();
-    }
+    const params = new URLSearchParams(search);
+
+    if (hash !== "#book" && params.get("book") !== "1") return;
+
+    openBooking(bookingPrefillFromSearch(params));
   }, [openBooking]);
 
   const value = useMemo(

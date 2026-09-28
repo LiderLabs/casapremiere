@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { ArrowUpRight } from "lucide-react"
+import { useBooking } from "@/components/booking/booking-provider"
 
 const projects = [
   {
@@ -39,6 +40,7 @@ const projects = [
 ]
 
 export function Projects() {
+  const { openBooking } = useBooking()
   const [hoveredId, setHoveredId] = useState<number | null>(null)
   const [revealedImages, setRevealedImages] = useState<Set<number>>(new Set())
   const imageRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -73,13 +75,17 @@ export function Projects() {
             <p className="text-muted-foreground text-sm tracking-[0.3em] uppercase mb-6">Interiors Made</p>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight">Selected Interiors</h2>
           </div>
-          <a
-            href="#"
+          {/* Was `href="#"` - a dead end next to the studio's best work. It opens
+              the appointment modal preset to interior design, the same way the
+              page's closing call to action does. */}
+          <button
+            type="button"
+            onClick={() => openBooking({ service: "Interior design" })}
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
           >
             Talk to the studio
             <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </a>
+          </button>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 md:gap-8">
@@ -90,7 +96,12 @@ export function Projects() {
               onMouseEnter={() => setHoveredId(project.id)}
               onMouseLeave={() => setHoveredId(null)}
             >
-              <div ref={(el) => (imageRefs.current[index] = el)} className="relative overflow-hidden aspect-[4/3] mb-6">
+              <div
+                ref={(el) => {
+                  imageRefs.current[index] = el
+                }}
+                className="relative overflow-hidden aspect-[4/3] mb-6"
+              >
                 <img
                   src={project.image || "/placeholder.svg"}
                   alt={project.title}
