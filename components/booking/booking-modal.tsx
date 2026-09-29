@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import {
+  useForm as useFormspreeForm,
+  ValidationError,
+} from "@formspree/react";
 import { CalendarDays, Check, MessageCircle, Phone } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -45,12 +49,17 @@ import {
   BOOKING_TIME_ZONE_LABEL,
   addBookingDays,
   bookingWhatsAppHref,
+  buildBookingSubmission,
   formatBookingDate,
   formatBookingWhen,
   isDateAvailable,
   startOfBookingDay,
 } from "@/lib/booking";
 import type { BookingPrefill } from "@/lib/booking";
+import {
+  FORMSPREE_BOOKING_FORM_ID,
+  type FormspreeSubmission,
+} from "@/lib/forms";
 
 const bookingSchema = z.object({
   name: z.string().trim().min(2, "Please enter your name."),
@@ -98,6 +107,9 @@ export function BookingModal({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitted, setSubmitted] = useState<BookingFormValues | null>(null);
 
+  const [submission, submitToFormspree, resetSubmission] =
+    useFormspreeForm<FormspreeSubmission>(FORMSPREE_BOOKING_FORM_ID);
+
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
     // date/service/slot are intentionally left empty so the visitor must choose
@@ -138,6 +150,12 @@ export function BookingModal({
   const showSuccess =
     BOOKING_SUBMISSION_ENABLED && isSubmitted && submitted !== null;
 
+  // A failed request, a blocked form or a form id that no longer exists arrives
+  // as a *form* error (one with no `field`), which is why it is rendered above
+  // the buttons with the WhatsApp/call fallback. Field errors from Formspree
+  // are rendered next to the field they belong to.
+  const formErrors = submission.errors?.getFormErrors() ?? [];
+
   // Apply a trigger's presets when the modal opens, keeping anything the
   // visitor already typed (the modal is not unmounted between opens).
   useEffect(() => {
@@ -145,19 +163,41 @@ export function BookingModal({
     form.reset({ ...form.getValues(), ...prefill });
   }, [open, prefill, form]);
 
-  function onSubmit(nextValues: BookingFormValues) {
-    // Unreachable while BOOKING_SUBMISSION_ENABLED is false, because the confirm
-    // button is disabled. Appointment delivery (API route + email) was
-    // deliberately deferred; when it lands, send `nextValues` from here and flip
-    // the flag in lib/booking.ts - everything else is already in place.
-    if (!BOOKING_SUBMISSION_ENABLED) return;
-
-    setSubmitted(nextValues);
+  // Formspree owns the outcome: the success view appears only once the endpoint
+  // has accepted the request, and `errors` carries whatever it refused.
+  useEffect(() => {
+    if (!submission.succeeded) return;
     setIsSubmitted(true);
     form.reset();
+  }, [submission.succeeded, form]);
+
+  async function onSubmit(nextValues: BookingFormValues) {
+    // Unreachable while BOOKING_SUBMISSION_ENABLED is false, because the confirm
+    // button is disabled and the modal offers the WhatsApp hand-off instead.
+    if (!BOOKING_SUBMISSION_ENABLED) return;
+
+    // Kept for the success view's "we have your request for <when>" line. It only
+    // ever renders once Formspree has accepted the submission, which the effect
+    // above sets.
+    setSubmitted(nextValues);
+
+    await submitToFormspree(
+      buildBookingSubmission({
+        name: nextValues.name,
+        email: nextValues.email,
+        phone: nextValues.phone,
+        service: nextValues.service,
+        location: nextValues.location,
+        date: nextValues.date,
+        slot: nextValues.slot,
+        notes: nextValues.notes,
+        company: nextValues.company,
+      }),
+    );
   }
 
   function handleBookAnother() {
+    resetSubmission();
     setIsSubmitted(false);
     setSubmitted(null);
   }
@@ -247,6 +287,11 @@ export function BookingModal({
                               />
                             </FormControl>
                             <FormMessage />
+                            <ValidationError
+                              errors={submission.errors}
+                              field="name"
+                              className="text-sm text-destructive"
+                            />
                           </FormItem>
                         )}
                       />
@@ -266,6 +311,11 @@ export function BookingModal({
                               />
                             </FormControl>
                             <FormMessage />
+                            <ValidationError
+                              errors={submission.errors}
+                              field="email"
+                              className="text-sm text-destructive"
+                            />
                           </FormItem>
                         )}
                       />
@@ -285,6 +335,11 @@ export function BookingModal({
                               />
                             </FormControl>
                             <FormMessage />
+                            <ValidationError
+                              errors={submission.errors}
+                              field="phone"
+                              className="text-sm text-destructive"
+                            />
                           </FormItem>
                         )}
                       />
@@ -468,14 +523,27 @@ export function BookingModal({
                       : `Online booking opens soon - send us your details on WhatsApp or call us and we will schedule your visit. ${BOOKING_HOURS_LABEL}.`}
                   </p>
 
+                  {formErrors.length > 0 ? (
+                    <p
+                      role="alert"
+                      className="mt-3 text-xs leading-relaxed text-destructive"
+                    >
+                      {formErrors.map((error) => error.message).join(" ")} You
+                      can also send these details on WhatsApp or call us.
+                    </p>
+                  ) : null}
+
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                     {BOOKING_SUBMISSION_ENABLED ? (
                       <>
                         <Button
                           type="submit"
+                          disabled={submission.submitting}
                           className="flex-1 rounded-full bg-foreground text-background hover:opacity-80"
                         >
-                          Request Appointment
+                          {submission.submitting
+                            ? "Sending..."
+                            : "Request Appointment"}
                         </Button>
                         <Button
                           asChild

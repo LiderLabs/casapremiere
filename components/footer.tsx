@@ -1,6 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { CrossSiteLink } from "@/components/cross-site-link"
+import { CONTACT_EMAIL, CONTACT_EMAIL_HREF } from "@/lib/forms"
 import { INTERIOR_HOME } from "@/lib/site-links"
 
 export function Footer() {
@@ -60,8 +61,8 @@ export function Footer() {
             <h4 className="text-sm font-medium mb-4">Connect</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li>
-                <a href="mailto:projects@casapremiergh.com" className="hover:text-foreground transition-colors">
-                  projects@casapremiergh.com 
+                <a href={CONTACT_EMAIL_HREF} className="hover:text-foreground transition-colors">
+                  {CONTACT_EMAIL}
                 </a>
               </li>
               <li>

@@ -7,18 +7,26 @@
 // Ghana runs on GMT/UTC+0 all year round (no daylight saving), so slots are
 // unambiguous - the formatters below still pin the time zone explicitly.
 
+import {
+  CONTACT_EMAIL,
+  currentPage,
+  type FormspreeSubmission,
+} from "@/lib/forms";
+
 export const BOOKING_TIME_ZONE = "Africa/Accra";
 export const BOOKING_TIME_ZONE_LABEL = "GMT (Accra)";
 
 /**
- * Flip to `true` once appointment requests are actually delivered somewhere
- * (e.g. `POST /api/booking` + email).
+ * Emergency off-switch for appointment delivery.
  *
- * While this is `false` the modal renders a disabled confirm button and points
- * visitors at phone/WhatsApp, so the site never claims to have received a
- * request it cannot deliver.
+ * While `true` the modal posts the request to the Formspree form in
+ * `lib/forms.ts` and shows its success view only once Formspree has accepted
+ * it. Flip it back to `false` and the modal returns to the WhatsApp-only
+ * hand-off - confirm button disabled, visitor pointed at phone/WhatsApp - so
+ * the site never claims to have received a request it cannot deliver.
+ * Validation, the calendar rules and the success view are unchanged either way.
  */
-export const BOOKING_SUBMISSION_ENABLED: boolean = false;
+export const BOOKING_SUBMISSION_ENABLED: boolean = true;
 
 /** Bookable time slots. 12:00 is deliberately left out. */
 export const BOOKING_SLOTS = [
@@ -55,12 +63,13 @@ export const BOOKING_SERVICES = [
 
 export type BookingService = (typeof BOOKING_SERVICES)[number];
 
-// Business details used by the booking section/modal fallbacks.
-// These mirror the details already shown in the contact section.
+// Business details used by the booking section/modal fallbacks. The address is
+// re-exported from `lib/forms.ts`, which is the single source of truth for the
+// details already shown in the contact section and both footers.
 export const BOOKING_PHONE_DISPLAY = "+233 555 287 488";
 export const BOOKING_PHONE_HREF = "tel:+233555287488";
 export const BOOKING_WHATSAPP_NUMBER = "233555287488";
-export const BOOKING_EMAIL = "projects@casapremiergh.com";
+export const BOOKING_EMAIL = CONTACT_EMAIL;
 export const BOOKING_HOURS_LABEL = "Mon-Fri - 09:00-17:00 GMT";
 
 const WEEKDAY_SET: ReadonlySet<number> = new Set<number>(BOOKING_WEEKDAYS);
@@ -234,6 +243,42 @@ export function buildBookingMessage(input: BookingMessageInput): string {
   }
 
   return lines.join("\n");
+}
+
+/**
+ * Payload for Formspree (see `lib/forms.ts`).
+ *
+ * The keys are the labels a person reads in the notification email, which is
+ * why `date` is formatted for a human instead of being sent as a `Date`, and
+ * why empty values are left out rather than arriving as blank lines.
+ * `company` is the modal's existing honeypot, forwarded under Formspree's own
+ * `_gotcha` name so a bot that fills it is discarded server-side as well as by
+ * the zod rule.
+ */
+export function buildBookingSubmission(
+  input: BookingMessageInput & { company?: string },
+): FormspreeSubmission {
+  const when =
+    input.date && input.slot
+      ? formatBookingWhen(input.date, input.slot)
+      : input.date
+        ? formatBookingDate(input.date)
+        : input.slot;
+
+  return {
+    name: input.name?.trim() || undefined,
+    email: input.email?.trim() || undefined,
+    phone: input.phone?.trim() || undefined,
+    service: input.service,
+    location: input.location?.trim() || undefined,
+    date: input.date ? formatBookingDate(input.date) : undefined,
+    slot: input.slot,
+    notes: input.notes?.trim() || undefined,
+    source: "appointment-modal",
+    page: currentPage(),
+    _subject: when ? `Appointment request: ${when}` : "Appointment request",
+    _gotcha: input.company ?? "",
+  };
 }
 
 /** Prefilled WhatsApp link (the visitor's own app sends it - no backend). */

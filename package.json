@@ -6,11 +6,18 @@
     "build": "next build",
     "dev": "next dev",
     "dev:3001": "next dev -p 3001",
+    "cms:migrate": "tsx scripts/cms-migrate.ts",
+    "cms:status": "tsx scripts/cms-status.ts",
+    "admin:create-user": "tsx scripts/admin-create-user.ts",
+    "admin:reset-password": "tsx scripts/admin-reset-password.ts",
     "lint": "eslint .",
     "start": "next start"
   },
   "dependencies": {
+    "@formspree/react": "^3.0.0",
     "@hookform/resolvers": "^3.10.0",
+    "@libsql/client": "^0.18.0",
+    "@node-rs/argon2": "^2.2.1",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
     "@radix-ui/react-aspect-ratio": "1.1.1",
@@ -44,6 +51,7 @@
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
     "date-fns": "4.1.0",
+    "drizzle-orm": "^0.45.3",
     "embla-carousel-react": "8.5.1",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
@@ -63,12 +71,14 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
+    "drizzle-kit": "^0.31.11",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

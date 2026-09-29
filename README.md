@@ -141,11 +141,62 @@ rather than at a hero with a scroll to find. Prices use the estate's own rule: a
 price string with no digits is still a placeholder and stays hidden
 (`getPropertyPriceValue()` in `lib/properties.ts`).
 
+## Contact form and email delivery (Formspree)
+
+The estate site's contact section is a working form: validation in the browser,
+delivery over [Formspree](https://formspree.io), and success shown only once the
+endpoint has accepted the post. Both forms share one configuration module.
+
+| Piece | Where |
+|---|---|
+| Form id, payload builders, public email address | `lib/forms.ts` |
+| The enquiry form (validation, submit, success view) | `components/sections/contact-form-panel.tsx` |
+| The section shell that renders it | `components/sections/contact-section.tsx` |
+| Appointment payload | `buildBookingSubmission()` in `lib/booking.ts` |
+
+**Form id.** `FORMSPREE_FORM_ID = "mrpbjpjn"`, i.e.
+`https://formspree.io/f/mrpbjpjn`. It is posted from the visitor's browser, so it
+is public by design and lives in code rather than an environment variable - the
+deployment still needs no env vars. Create a second form in the Formspree
+dashboard and set `FORMSPREE_BOOKING_FORM_ID` if appointment requests should land
+in their own inbox instead of sharing the enquiry form.
+
+**Email address.** `CONTACT_EMAIL` (`info@liderlabs.com`) in `lib/forms.ts` is the
+single source for every `mailto:` - the contact section, both footers, the
+interiors call-to-action, and the property drawer (which reads `BOOKING_EMAIL`,
+re-exported from the same constant).
+
+**What is sent.** The submitted fields plus `_subject` (so the notification reads
+"New enquiry - Interior design" instead of "Form submission"), `source`
+(`estate-contact-form` / `appointment-modal`) and `page` (the URL the visitor was
+on). Empty optional fields are left out. Formspree uses the `email` field as the
+reply-to address.
+
+**Spam.** Both forms carry a `_gotcha` honeypot, which Formspree discards
+server-side. The contact form's field is hidden and read straight off the DOM at
+submit time, so a bot that fills it is dropped even though the payload is built
+by hand; the appointment modal's existing empty-`company` zod rule feeds the same
+field.
+
+**Failures are visible.** A failed request, a blocked form or a form id that no
+longer exists comes back as a form-level error and is rendered next to the submit
+button with the phone/email fallback - the success view is never shown for a
+submission that did not reach Formspree. Field-level errors Formspree returns are
+rendered under the field they belong to.
+
+**Why the form is its own chunk.** `contact-section.tsx` renders the details
+column and loads the form with `next/dynamic`, so react-hook-form, zod, the Radix
+select and the Formspree client stay off the landing page's critical path - the
+same treatment the booking modal, the property drawer and the affordability
+dialog get. `ssr` is left at its default, so the empty form is still part of the
+prerendered HTML: no blank card while the chunk arrives, and no layout shift.
+
 ## Appointment booking
 
-Both sites share one booking flow that is **UI-complete but not yet wired to a
-delivery channel** — deliberately, so the site never claims to have received a
-request it cannot deliver.
+Both sites share one booking flow that validates in the browser, delivers the
+request over Formspree, and shows its success view only once the endpoint has
+accepted it - so the modal can never claim a request was received when it was
+not.
 
 | Piece | Where |
 |---|---|
@@ -179,17 +230,19 @@ export const BOOKING_BLACKOUT_DATES = [];      // e.g. ["2026-12-25"]
 `isDateAvailable()` is used by both the calendar (`disabled`) and the zod schema,
 so a stale modal cannot submit a past date, a weekend or a blackout day.
 
-**Current behaviour:** `BOOKING_SUBMISSION_ENABLED` is `false`, so
-`Request Appointment` is disabled and the modal's primary action is a **WhatsApp
-hand-off** — `bookingWhatsAppHref()` URL-encodes whatever the visitor has typed
-into `wa.me/233555287488`. Nothing is sent or stored by the site; the visitor's own
-app sends it. Phone (`tel:`) and email (`mailto:`) links are also available.
+**Delivery.** `Request Appointment` posts the validated request to Formspree from
+`onSubmit` in `booking-modal.tsx`; the button reads `Sending...` while the request
+is in flight, the success view appears only when the endpoint reports success, and
+a failure shows a form-level message above the buttons. The payload is
+`buildBookingSubmission()` in `lib/booking.ts` - name, email, phone, service,
+location, the date and slot formatted for a human, notes, and the honeypot.
 
-**To enable real submissions later:** add the delivery call (API route + email)
-inside `onSubmit` in `booking-modal.tsx` and flip
-`BOOKING_SUBMISSION_ENABLED` to `true` in `lib/booking.ts`. Validation, the
-calendar rules, the loading/success states and the empty-honeypot guard are
-already in place.
+**Emergency off-switch.** `BOOKING_SUBMISSION_ENABLED` in `lib/booking.ts` is
+`true`. Set it back to `false` and the modal returns to the WhatsApp-only
+hand-off: `Request Appointment` disabled, and `bookingWhatsAppHref()` URL-encoding
+whatever the visitor has typed into `wa.me/233555287488` for the visitor's own app
+to send. Phone (`tel:`) and email (`mailto:`) links are available in both modes,
+and a blocked or offline submission falls back to them.
 
 The modal is loaded with `next/dynamic` on first open, so Radix Dialog,
 react-day-picker, react-hook-form and zod stay out of the initial page bundle.
@@ -239,6 +292,68 @@ the "quick view" feel) and a full-screen bottom sheet on mobile. Both sit at
 detail pages — this is a quick view, not a listing page. The card grid stays
 server-rendered, so each home's name, location, spec line and price are still in
 the initial HTML.
+
+## Content management (admin CMS) — Phases 1–3 built
+
+The admin lives at `/admin` in this repo. **Sign-in, sessions, throttling, the audit trail, the
+`(admin)` shell (Phase 1)**, **the content schema — `properties`, `property_media`, `settings` —
+applied through one migration folder that runs against the local file database or Turso (Phase 2)**
+and **user management at `/admin/users` (Phase 3)** are built and verified (evidence tables in
+§17–§19 of `docs/cms-build-spec.md`). The property list, editor, media manager, business settings
+and the public read path are still to come; until they land, property content continues to be
+authored by hand in `lib/properties.ts`, exactly as the drawer section above describes.
+
+> **Open item (Phase 2, infrastructure).** The Turso token that was supplied is refused by the
+> database — `401 invalid JWT token: can't be decoded with any of the existing keys` — so the schema
+> is not applied there yet. Everything else in Phases 2–3 is done and verified locally. Fix: create
+> a fresh token with `turso db tokens create <database>`, put it in `.env.turso.local`, then run
+> `npm run cms:migrate -- --turso` and `npm run cms:status -- --turso`.
+
+| Piece | Where |
+|---|---|
+| Full build spec (scope, schema, API, auth, effort, risks, evidence per phase) | `docs/cms-build-spec.md` |
+| Admin (Phase 1 built) | `app/(admin)/**` — its own route group with its own root layout, so neither site's CSS can bleed in |
+| Content store (Phases 1–2) | **Turso (libSQL)** via `@libsql/client` + Drizzle — dev uses `file:./.local/cms.db`, production a `libsql://` URL, so both run the same SQL and the same migrations with no database server to manage |
+| Users (Phase 3 built) | `/admin/users` — create, change role, disable/enable, reset password, "sign out everywhere". Admin-only, audited, and unable to remove the last admin or yourself |
+| Images (planned) | **Cloudflare R2** — resized in the browser, uploaded straight to R2 with a presigned `PUT`, served from a custom domain |
+| Publish (planned) | `revalidatePath("/")` + `revalidatePath("/interior")`, so a change is live in seconds without a commit or redeploy |
+| Editor guide (planned) | `docs/` alongside this README |
+
+Local workflow:
+
+```bash
+npm run cms:migrate                                     # creates/updates ./.local/cms.db (gitignored)
+npm run admin:create-user -- --username casa --role admin
+npm run cms:status                                      # migrations, tables, row counts, accounts
+npm run dev                                             # → http://localhost:3000/admin
+npm run admin:reset-password -- --username casa         # break-glass: unlocks + resets, forces a change
+```
+
+Production data lives in Turso. Those two credentials sit in gitignored `.env.turso.local` (and in
+Vercel's environment variables), which is what the `--turso` flag reads — so a plain `npm run dev`
+never writes to the live catalogue:
+
+```bash
+npm run cms:migrate -- --turso                          # apply ./drizzle to Turso
+npm run admin:create-user -- --username casa --role admin --turso
+npm run cms:status -- --turso
+```
+
+**Roles.** Two. `admin` does everything, including delete, reorder, business settings and users.
+`editor` can create and edit homes, manage media, and **publish or unpublish** them — but cannot
+delete a home, reorder the catalogue, or manage users. An editor's un-published edit is invisible
+to visitors and shows as *Pending changes* in the admin list.
+
+**What changes on the public side is confined to six files:** the catalogue moves from a hard-coded array to a
+server-side read that `PropertyProvider` owns —
+
+`app/(site)/page.tsx` · `components/property/property-provider.tsx` ·
+`components/sections/collection-section.tsx` · `components/property/property-drawer.tsx` ·
+`components/property/shortlist-panel.tsx` · `components/interior-homes.tsx`
+
+`lib/properties.ts` keeps its types, `PROPERTY_HOST` and `getPropertyPriceValue()` (client components import them,
+so they stay free of server-only code), and the pixel-identical screenshot diff at 1440 px and 390 px remains the
+release gate for that change.
 
 ## Before / after videos (`/interior`)
 

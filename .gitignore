@@ -29,3 +29,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# local CMS database (development only - never the production store)
+/.local/
+
