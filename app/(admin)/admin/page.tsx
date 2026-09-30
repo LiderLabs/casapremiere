@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireUserPage } from "@/lib/admin/auth";
 import { formatAccra } from "@/lib/admin/format";
 import { listRecentAudit } from "@/lib/cms/audit";
+import { listProperties } from "@/lib/cms/queries";
 
 import { SignOutButton } from "./sign-out-button";
 
@@ -13,7 +14,11 @@ export default async function AdminDashboardPage() {
   // Redirects to sign-in when signed out, and to the password screen when the account still
   // has to choose a password.
   const user = await requireUserPage();
-  const activity = await listRecentAudit(8);
+  const [properties, activity] = await Promise.all([listProperties(), listRecentAudit(10)]);
+
+  const live = properties.filter((property) => property.published && !property.pendingChanges);
+  const pending = properties.filter((property) => property.pendingChanges);
+  const drafts = properties.filter((property) => !property.published);
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
@@ -32,20 +37,62 @@ export default async function AdminDashboardPage() {
         <SignOutButton />
       </header>
 
-      <section className="mt-8 rounded-lg border border-border p-5">
-        <h2 className="text-sm font-medium">What is built today</h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Working today: sign-in, forced password change, per-request session checks, throttling
-          and the audit trail below{user.role === "admin" ? ", plus user management" : ""}. The
-          property list, editor, media manager and business settings arrive in the next phases
-          — see <code className="font-mono text-xs">docs/cms-build-spec.md</code>.
-        </p>
+      <section className="mt-8 grid grid-cols-3 gap-3">
+        {[
+          { label: "Live", count: live.length },
+          { label: "Pending", count: pending.length },
+          { label: "Drafts", count: drafts.length },
+        ].map((stat) => (
+          <div key={stat.label} className="rounded-lg border border-border p-4">
+            <p className="text-2xl font-medium">{stat.count}</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+              {stat.label}
+            </p>
+          </div>
+        ))}
+      </section>
+
+      {pending.length > 0 ? (
+        <section className="mt-6 rounded-lg border border-border p-5">
+          <h2 className="text-sm font-medium">Publish pending</h2>
+          <ul className="mt-2 space-y-1 text-sm">
+            {pending.map((property) => (
+              <li key={property.slug}>
+                <Link
+                  className="underline underline-offset-4"
+                  href={`/admin/properties/${property.slug}`}
+                >
+                  {property.name}
+                </Link>
+                <span className="text-muted-foreground">
+                  {" "}
+                  — edited by {property.updatedBy} at {formatAccra(property.updatedAt)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <section className="mt-6 rounded-lg border border-border p-5">
+        <h2 className="text-sm font-medium">Catalogue</h2>
         <p className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          <Link className="underline underline-offset-4" href="/admin/properties">
+            Properties
+          </Link>
           {user.role === "admin" ? (
-            <Link className="underline underline-offset-4" href="/admin/users">
-              Users
-            </Link>
+            <>
+              <Link className="underline underline-offset-4" href="/admin/users">
+                Users
+              </Link>
+              <Link className="underline underline-offset-4" href="/admin/settings">
+                Settings
+              </Link>
+            </>
           ) : null}
+          <Link className="underline underline-offset-4" href="/admin/audit">
+            History
+          </Link>
           <Link className="underline underline-offset-4" href="/">
             Open the estate site
           </Link>
@@ -82,3 +129,4 @@ export default async function AdminDashboardPage() {
     </main>
   );
 }
+

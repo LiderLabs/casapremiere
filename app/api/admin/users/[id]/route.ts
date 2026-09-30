@@ -6,7 +6,8 @@
 import { NextResponse } from "next/server";
 
 import { assertSameOrigin, requireApiUser } from "@/lib/admin/auth";
-import { UserAdminError, updateUser } from "@/lib/admin/users";
+import { updateUser } from "@/lib/admin/users";
+import { errorResponse } from "@/lib/cms/errors";
 import { fieldErrors, firstIssueMessage, updateUserSchema } from "@/lib/cms/validation";
 
 export const dynamic = "force-dynamic";
@@ -14,14 +15,7 @@ export const dynamic = "force-dynamic";
 /** Next 16 hands route params in as a promise. */
 type Context = { params: Promise<{ id: string }> };
 
-async function refuse(error: unknown) {
-  if (error instanceof UserAdminError) {
-    return NextResponse.json({ error: error.message }, { status: error.status });
-  }
-
-  console.error("[cms] user update failed:", error);
-  return NextResponse.json({ error: "Could not update the user." }, { status: 500 });
-}
+const refuse = (error: unknown) => errorResponse(error, "Could not update the user.");
 
 export async function PATCH(request: Request, { params }: Context) {
   if (!assertSameOrigin(request)) {

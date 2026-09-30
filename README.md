@@ -43,11 +43,19 @@ npm run build      # compiles both routes as static pages
 npm start          # serves on :3000
 ```
 
+Since the content flip (§ *Content management*) both public routes are prerendered **from the content
+database**, so a production build needs the two Turso variables — `TURSO_DATABASE_URL` and
+`TURSO_AUTH_TOKEN`. `npm run dev` needs nothing: outside production, `lib/cms/env.ts` falls back to
+`file:./.local/cms.db`, so local work never touches the live catalogue. If a deploy ever fails while
+collecting `/` page data, this is the missing pair.
+
 > Use `package-lock.json` (npm). The leftover `pnpm-lock.yaml` was removed.
 
 ## Deployment (Vercel)
 
-The app is a standard Next.js 16 project — no env vars, no custom server, no external font/image CDNs (fonts are self-hosted; `images.unoptimized: true`).
+The app is a standard Next.js 16 project — no custom server, no external font/image CDNs (fonts are
+self-hosted; `images.unoptimized: true`). Two environment variables are needed now: the two Turso
+values, because the public routes read the database at build time.
 
 ### Step by step
 
@@ -57,7 +65,7 @@ The app is a standard Next.js 16 project — no env vars, no custom server, no e
    - **Framework Preset**: Next.js (auto-detected)
    - **Root Directory**: leave blank (repository root)
    - **Build Command / Install Command**: leave defaults
-   - **Environment Variables**: none needed
+   - **Environment Variables**: `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` (plus `APP_ORIGIN`, `IP_HASH_SALT` and the `R2_*` values the admin CMS needs — see `docs/cms-build-spec.md` §10). The first two must be present at **build** time, because `/` and `/interior` are prerendered from the database
    - Node.js 20+ (default)
 4. Deploy. The **preview URL** is a full production build — verify `/` and `/interior` there.
 5. **Domains**: assign your production domain (e.g. `casapremiere.com`) to this project.
@@ -154,12 +162,7 @@ endpoint has accepted the post. Both forms share one configuration module.
 | The section shell that renders it | `components/sections/contact-section.tsx` |
 | Appointment payload | `buildBookingSubmission()` in `lib/booking.ts` |
 
-**Form id.** `FORMSPREE_FORM_ID = "mrpbjpjn"`, i.e.
-`https://formspree.io/f/mrpbjpjn`. It is posted from the visitor's browser, so it
-is public by design and lives in code rather than an environment variable - the
-deployment still needs no env vars. Create a second form in the Formspree
-dashboard and set `FORMSPREE_BOOKING_FORM_ID` if appointment requests should land
-in their own inbox instead of sharing the enquiry form.
+
 
 **Email address.** `CONTACT_EMAIL` (`info@liderlabs.com`) in `lib/forms.ts` is the
 single source for every `mailto:` - the contact section, both footers, the
@@ -293,21 +296,26 @@ detail pages — this is a quick view, not a listing page. The card grid stays
 server-rendered, so each home's name, location, spec line and price are still in
 the initial HTML.
 
-## Content management (admin CMS) — Phases 1–3 built
+## Content management (admin CMS) — Phases 1–7 built
 
 The admin lives at `/admin` in this repo. **Sign-in, sessions, throttling, the audit trail, the
 `(admin)` shell (Phase 1)**, **the content schema — `properties`, `property_media`, `settings` —
-applied through one migration folder that runs against the local file database or Turso (Phase 2)**
-and **user management at `/admin/users` (Phase 3)** are built and verified (evidence tables in
-§17–§19 of `docs/cms-build-spec.md`). The property list, editor, media manager, business settings
-and the public read path are still to come; until they land, property content continues to be
-authored by hand in `lib/properties.ts`, exactly as the drawer section above describes.
+applied through one migration folder that runs against the local file database or Turso (Phase 2)**,
+**user management at `/admin/users` (Phase 3)**, **the properties API — drafts, optimistic saves,
+publish/unpublish with instant revalidation, reorder, delete, business settings and a public
+`Property[]` feed (Phase 4)**, **the screens — dashboard, property list, section editor,
+settings form, history (Phase 5)**, **the image pipeline — browser resize → presigned `PUT` → R2
+(Phase 6)** and **the public read flip — `/` and `/interior` render published rows from the database,
+and every content write revalidates both routes (Phase 7)** are built and verified (evidence tables in
+§17–§23 of `docs/cms-build-spec.md`). The array in `lib/properties.ts` is no longer what the sites
+serve: it stays in the file as the seed source for `npm run migrate:properties` and as the pixel
+gate's baseline, and nothing in the app reads it.
 
-> **Open item (Phase 2, infrastructure).** The Turso token that was supplied is refused by the
-> database — `401 invalid JWT token: can't be decoded with any of the existing keys` — so the schema
-> is not applied there yet. Everything else in Phases 2–3 is done and verified locally. Fix: create
-> a fresh token with `turso db tokens create <database>`, put it in `.env.turso.local`, then run
-> `npm run cms:migrate -- --turso` and `npm run cms:status -- --turso`.
+> **Turso is connected.** The production database carries the same schema as the local file — 2
+> migrations, 7 tables — plus the first admin, `casa`, who must choose their own password at first
+> sign-in. The credentials live in gitignored `.env.turso.local` and are what the `--turso` flag
+> reads; Vercel needs the same two values when the admin is deployed. The names are exact —
+> `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` — and a pair under any other name is silently ignored.
 
 | Piece | Where |
 |---|---|
@@ -315,8 +323,12 @@ authored by hand in `lib/properties.ts`, exactly as the drawer section above des
 | Admin (Phase 1 built) | `app/(admin)/**` — its own route group with its own root layout, so neither site's CSS can bleed in |
 | Content store (Phases 1–2) | **Turso (libSQL)** via `@libsql/client` + Drizzle — dev uses `file:./.local/cms.db`, production a `libsql://` URL, so both run the same SQL and the same migrations with no database server to manage |
 | Users (Phase 3 built) | `/admin/users` — create, change role, disable/enable, reset password, "sign out everywhere". Admin-only, audited, and unable to remove the last admin or yourself |
-| Images (planned) | **Cloudflare R2** — resized in the browser, uploaded straight to R2 with a presigned `PUT`, served from a custom domain |
-| Publish (planned) | `revalidatePath("/")` + `revalidatePath("/interior")`, so a change is live in seconds without a commit or redeploy |
+| Properties API (Phase 4 built) | `/api/admin/properties**` (list, drafts, optimistic saves, publish/unpublish, reorder, delete), `/api/admin/settings`, `/api/public/properties`. One zod schema per write path, real `400/404/409/422` behaviour, everything audited. The screens arrived in Phase 5 |
+| Properties screens (Phase 5 built) | `/admin` (live/draft/pending counts, pending shortcut, last-10 activity), `/admin/properties` (thumbnails, badges, create, publish/unpublish, admin-only reorder + slug-typed delete), `/admin/properties/[slug]` (section saves with `updatedAt` revision, publish dialog, media manager), `/admin/settings`, `/admin/audit` + `GET /api/admin/audit` |
+| Media API (Phase 6 built) | `POST /api/admin/uploads/sign` (5-min presigned PUT, editor, rate-limited), `POST /api/admin/uploads/confirm`, `PATCH`/`DELETE /api/admin/media/[id]`. Deleting a property deletes its R2 objects |
+| Images (Phase 6 built) | **Cloudflare R2** — resized in the browser to WebP (≤2000 px, q0.8, ≤1.5 MB), uploaded straight to R2 with a presigned `PUT`, confirmed into `property_media`. No public URL exists yet, so reads proxy through `GET /api/media/<key>` (spec §22.1); `R2_PUBLIC_BASE_URL` flips them to direct later. `npm run cms:r2` shows used and orphan keys |
+| Public read path (Phase 7 built) | `lib/cms/public.ts` — `listPublishedProperties()` plus the `Property[]` mapper — is the single source of the public catalogue. `app/(site)/page.tsx` reads it, passes it to `components/property/property-provider.tsx`, which owns it for the grid, the drawer/pager and the shortlist (`useProperty()`); `components/interior-homes.tsx` reads the same rows server-side. `lib/properties.ts` keeps only types and pure helpers, and `findPropertyBySlug(list, slug)` takes the catalogue as an argument |
+| Publish (built) | `revalidatePath("/")` + `revalidatePath("/interior")` on **every content write** — publish/unpublish, a save, a reorder, a delete, a media change — through `revalidatePublishedPages()` (`lib/cms/revalidate.ts`), so a change is live in seconds without a commit or redeploy |
 | Editor guide (planned) | `docs/` alongside this README |
 
 Local workflow:
@@ -325,6 +337,7 @@ Local workflow:
 npm run cms:migrate                                     # creates/updates ./.local/cms.db (gitignored)
 npm run admin:create-user -- --username casa --role admin
 npm run cms:status                                      # migrations, tables, row counts, accounts
+npm run cms:r2                                          # image objects, used vs orphan (needs R2_* in .env.local)
 npm run dev                                             # → http://localhost:3000/admin
 npm run admin:reset-password -- --username casa         # break-glass: unlocks + resets, forces a change
 ```
@@ -344,16 +357,30 @@ npm run cms:status -- --turso
 delete a home, reorder the catalogue, or manage users. An editor's un-published edit is invisible
 to visitors and shows as *Pending changes* in the admin list.
 
-**What changes on the public side is confined to six files:** the catalogue moves from a hard-coded array to a
-server-side read that `PropertyProvider` owns —
+**The public side reads the database (Phase 7, built).** The catalogue moved from a hard-coded array to
+a server-side read, and the pieces that changed are —
 
-`app/(site)/page.tsx` · `components/property/property-provider.tsx` ·
-`components/sections/collection-section.tsx` · `components/property/property-drawer.tsx` ·
-`components/property/shortlist-panel.tsx` · `components/interior-homes.tsx`
+`app/(site)/page.tsx` · `components/property/property-provider.tsx` · `components/sections/collection-section.tsx` ·
+`components/property/property-drawer.tsx` · `components/property/shortlist-panel.tsx` ·
+`components/interior-homes.tsx` · plus `components/property/shortlist-store.ts` and
+`components/property/shortlist-float.tsx` (the shortlist keeps slugs, not homes) and
+`lib/cms/public.ts` (the read) · `lib/cms/revalidate.ts` (one path list, called by every write route).
 
-`lib/properties.ts` keeps its types, `PROPERTY_HOST` and `getPropertyPriceValue()` (client components import them,
-so they stay free of server-only code), and the pixel-identical screenshot diff at 1440 px and 390 px remains the
-release gate for that change.
+`lib/properties.ts` keeps its types, `PROPERTY_HOST` and `getPropertyPriceValue()` (client components import
+them, so they stay free of server-only code), and its `PROPERTIES` array is now read by nothing but
+`npm run migrate:properties` and the pixel gate. The gate itself: the pre-refactor captures live in `.local/baseline/`
+and `node .local/verify/pixel-gate.mjs` fetches both routes from a local production build and compares the
+rendered markup character for character — **identical today, 75,989 chars on `/` and 39,271 on `/interior`** —
+while asserting every published home is still named and linked. `node .local/verify/revalidation-e2e.mjs`
+then proves the writes reach the pages (rename → both routes `cache MISS` and updated; unpublish → gone;
+publish → back; reorder → the grid follows), and puts everything back. `node .local/verify/auth-e2e.mjs`
+closes the auth half of the checklist in one run — the sign-in failure modes (a foreign `Origin` refused
+before a credential is read, an unknown username and a wrong password indistinguishable, five wrong guesses
+locking the account, a disabled account, a temporary password that reaches nothing until it is changed)
+and the authorization matrix (an editor may read, save and publish, and gets `403` for delete, reorder,
+users and settings), plus a per-address throttle proof. It creates its own throwaway users each run,
+removes them and restores the rows it touched, so two runs in a row give the same 82/82 PASS.
+All three scripts are gitignored local artefacts; evidence table in `docs/cms-build-spec.md` §23.
 
 ## Before / after videos (`/interior`)
 

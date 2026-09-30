@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Heart } from "lucide-react";
 
+import { useProperty } from "@/components/property/property-provider";
 import { useShortlistPanel } from "@/components/property/shortlist-provider";
 import { useShortlistSlugs } from "@/components/property/shortlist-store";
+import { findPropertyBySlug } from "@/lib/properties";
 import { cn } from "@/lib/utils";
 
 /**
@@ -24,6 +26,7 @@ const REVEAL_AFTER_VIEWPORTS = 0.6;
 
 export function ShortlistFloat() {
   const slugs = useShortlistSlugs();
+  const { properties } = useProperty();
   const { openPanel } = useShortlistPanel();
   const [isPastHero, setIsPastHero] = useState(false);
 
@@ -49,7 +52,12 @@ export function ShortlistFloat() {
     };
   }, []);
 
-  const count = slugs.length;
+  // Count what the catalogue still publishes, so an unpublished home cannot leave a permanent
+  // "1 saved" badge over an empty panel — the panel resolves its own list the same way.
+  const count = useMemo(
+    () => slugs.filter((slug) => findPropertyBySlug(properties, slug)).length,
+    [slugs, properties],
+  );
   const isVisible = count > 0 && isPastHero;
 
   return (

@@ -13,6 +13,8 @@
 import { sql } from "drizzle-orm";
 import { check, index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+import { PROPERTY_STATUSES } from "../properties";
+
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   /** Stored lowercased so sign-in is case-insensitive without a collation. */
@@ -82,15 +84,13 @@ export const auditLog = sqliteTable(
 // Content: the property catalogue both public sites read (Phase 2)
 // ---------------------------------------------------------------------------------------
 
-/** The four values the public card and drawer know how to render. */
-export const PROPERTY_STATUSES = [
-  "Available",
-  "Under construction",
-  "Sold",
-  "Coming soon",
-] as const;
-
-/** Where an image sits in a property: the grid card, the drawer's opening shot, the rest. */
+/**
+ * Where an image sits in a property: the grid card, the drawer's opening shot, the rest.
+ *
+ * Unlike PROPERTY_STATUSES (which the public types also need, so it lives in lib/properties.ts),
+ * this is an admin-only idea: the public Property type has `image`, `hero` and `gallery` fields,
+ * not roles.
+ */
 export const PROPERTY_MEDIA_ROLES = ["card", "hero", "gallery"] as const;
 
 export const properties = sqliteTable(

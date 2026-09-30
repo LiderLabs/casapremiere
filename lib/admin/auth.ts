@@ -43,7 +43,16 @@ export {
 export { SESSION_COOKIE } from "@/lib/admin/session-cookie";
 
 export const MAX_FAILED_ATTEMPTS = 5;
-export const LOCKOUT_MINUTES = 15;
+
+/**
+ * How long five wrong passwords lock an account for. Five minutes, not fifteen: long enough to
+ * make guessing useless, short enough that a person who mistyped under pressure is not locked out
+ * of their own site for a coffee break. The username rate-limit window in
+ * app/api/admin/auth/login/route.ts is deliberately the same length, so the lock and the counter
+ * that triggered it expire together.
+ */
+export const LOCKOUT_MINUTES = 5;
+
 const SESSION_TOUCH_MINUTES = 5;
 
 export type SessionUser = {

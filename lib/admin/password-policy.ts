@@ -6,15 +6,15 @@
 // argon2's browser build exports nothing - which is exactly what happened the first time the
 // password form needed PASSWORD_MIN_LENGTH for its hint text.
 
-export const PASSWORD_MIN_LENGTH = 12;
+export const PASSWORD_MIN_LENGTH = 8;
 
 /** The handful of strings people actually reach for on a client site. */
 export const PASSWORD_DENY_LIST = [
   "casapremier",
   "casapremiere",
   "password",
-  "123456789012",
-  "qwertyuiop12",
+  "12345678",
+  "qwerty12",
   "casaadmin",
 ];
 
@@ -23,7 +23,7 @@ export const normalizeUsername = (value: string) => value.trim().toLowerCase();
 export type PasswordPolicyResult = { ok: true } | { ok: false; message: string };
 
 /**
- * Length over composition (NIST): 12+ characters, don't contain your own name or username,
+ * Length over composition (NIST): 8+ characters, don't contain your own name or username,
  * and don't be one of the handful of obvious strings.
  */
 export function checkPasswordPolicy(
@@ -38,7 +38,7 @@ export function checkPasswordPolicy(
   const username = normalizeUsername(context.username);
   const name = context.name?.trim().toLowerCase() ?? "";
 
-  if (username.length >= 3 && lower.includes(username)) {
+  if (username.length >= 5 && lower.includes(username)) {
     return { ok: false, message: "Do not include your username in the password." };
   }
   if (name.length >= 3 && lower.includes(name)) {

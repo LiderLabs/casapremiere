@@ -25,7 +25,7 @@ import {
   CROSS_SELL_BOOKING_EVENT,
   crossSellBookingAnalyticsProps,
 } from "@/lib/cross-sell";
-import { PROPERTIES, getPropertyBySlug, type Property } from "@/lib/properties";
+import { findPropertyBySlug, type Property } from "@/lib/properties";
 import { cn } from "@/lib/utils";
 
 /** Matches the sheet's 300ms close transition, so two overlays never fight for focus. */
@@ -52,18 +52,18 @@ export function ShortlistPanel({ open, onOpenChange }: ShortlistPanelProps) {
   const isMobile = useIsMobile();
   const slugs = useShortlistSlugs();
   const { openBooking } = useBooking();
-  const { openProperty } = useProperty();
+  const { openProperty, properties } = useProperty();
 
-  // Resolve the saved slugs against the catalogue. Ordering follows
-  // lib/properties.ts rather than click order, so the studio reads the homes the
-  // way the site presents them.
+  // Resolve the saved slugs against the catalogue the page was rendered with. Ordering
+  // follows the grid rather than click order, so the studio reads the homes the way the site
+  // presents them — and a slug that is no longer published simply drops out.
   const savedProperties = useMemo(
     () =>
       slugs
-        .map((slug) => getPropertyBySlug(slug))
+        .map((slug) => findPropertyBySlug(properties, slug))
         .filter((property): property is Property => Boolean(property))
-        .sort((a, b) => PROPERTIES.indexOf(a) - PROPERTIES.indexOf(b)),
-    [slugs],
+        .sort((a, b) => properties.indexOf(a) - properties.indexOf(b)),
+    [slugs, properties],
   );
 
   const count = savedProperties.length;

@@ -4,12 +4,16 @@ import { ArrowUpRight } from "lucide-react";
 import { FadeImage } from "@/components/fade-image";
 import { ShortlistHeart } from "@/components/property/shortlist-heart";
 import { useProperty } from "@/components/property/property-provider";
-import { PROPERTIES } from "@/lib/properties";
 
-// Property data lives in lib/properties.ts so the grid and the quick-view
-// drawer always agree.
+// The catalogue comes from PropertyProvider — published rows the server read via
+// lib/cms/public.ts — so the grid and the quick-view drawer can never disagree and a
+// published edit appears here on the next revalidation (docs/cms-build-spec.md D7).
 export function CollectionSection() {
-  const { openProperty } = useProperty();
+  const { openProperty, properties } = useProperty();
+
+  // An empty catalogue renders no cards rather than a broken placeholder: a draft-only
+  // database is a normal state while the admin is being used.
+  if (properties.length === 0) return null;
 
   return (
     <section id="properties" className="bg-background">
@@ -27,7 +31,7 @@ export function CollectionSection() {
       <div className="pb-24">
         {/* Mobile: Horizontal Carousel */}
         <div className="flex gap-6 overflow-x-auto px-6 pb-4 md:hidden snap-x snap-mandatory scrollbar-hide">
-          {PROPERTIES.map((property) => (
+          {properties.map((property) => (
             <div key={property.id} className="group relative flex-shrink-0 w-[75vw] snap-center">
               {/* Image */}
               <button
@@ -87,7 +91,7 @@ export function CollectionSection() {
 
         {/* Desktop: Grid */}
         <div className="hidden md:grid md:grid-cols-3 gap-8 md:px-12 lg:px-20">
-          {PROPERTIES.map((property) => (
+          {properties.map((property) => (
             <div key={property.id} className="group relative">
               {/* Image */}
               <button

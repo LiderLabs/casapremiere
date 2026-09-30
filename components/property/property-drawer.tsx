@@ -38,11 +38,12 @@ import {
   crossSellBookingAnalyticsProps,
 } from "@/lib/cross-sell";
 import {
-  PROPERTIES,
+  findPropertyBySlug,
   PROPERTY_HOST,
   getPropertyPriceValue,
   type Property,
 } from "@/lib/properties";
+import { useProperty } from "@/components/property/property-provider";
 import { cn } from "@/lib/utils";
 
 const HIGHLIGHT_ICONS = {
@@ -86,6 +87,9 @@ export function PropertyDrawer({
   const isMobile = useIsMobile();
   const { openBooking } = useBooking();
   const { openCalculator } = useMortgage();
+  // The pager walks the same catalogue the grid rendered, so "n of m" and the arrows cannot
+  // disagree with the order on the page.
+  const { properties } = useProperty();
   const [imageIndex, setImageIndex] = useState(0);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
@@ -100,10 +104,10 @@ export function PropertyDrawer({
   const images = [property.hero, ...property.gallery];
   const activeIndex = Math.min(imageIndex, images.length - 1);
   const activeImage = images[activeIndex];
-  const currentIndex = PROPERTIES.findIndex((item) => item.slug === property.slug);
-  const previous = currentIndex > 0 ? PROPERTIES[currentIndex - 1] : undefined;
+  const currentIndex = properties.findIndex((item) => item.slug === property.slug);
+  const previous = currentIndex > 0 ? properties[currentIndex - 1] : undefined;
   const next =
-    currentIndex < PROPERTIES.length - 1 ? PROPERTIES[currentIndex + 1] : undefined;
+    currentIndex < properties.length - 1 ? properties[currentIndex + 1] : undefined;
 
   const confirmedSpecs = property.specs.filter((spec) => spec.value.trim().length > 0);
   const pendingSpecs = property.specs.filter((spec) => spec.value.trim().length === 0);
@@ -495,7 +499,7 @@ export function PropertyDrawer({
               <span className="truncate">{previous ? previous.name : "Previous"}</span>
             </button>
             <span className="shrink-0 text-xs text-muted-foreground">
-              {currentIndex + 1} of {PROPERTIES.length}
+              {currentIndex + 1} of {properties.length}
             </span>
             <button
               type="button"

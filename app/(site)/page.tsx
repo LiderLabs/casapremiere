@@ -17,14 +17,21 @@ import { BookingProvider } from "@/components/booking/booking-provider";
 import { PropertyProvider } from "@/components/property/property-provider";
 import { ShortlistProvider } from "@/components/property/shortlist-provider";
 import { ShortlistFloat } from "@/components/property/shortlist-float";
+import { listPublicProperties } from "@/lib/cms/public";
 
-export default function Home() {
+// The catalogue is read here, on the server, and handed down once — so the grid, the drawer
+// pager and the shortlist all render from published rows rather than a hard-coded array
+// (docs/cms-build-spec.md D7). The page stays statically prerendered and a publish
+// revalidates it (D6), which is what makes an edit live in seconds without a deploy.
+export default async function Home() {
+  const properties = await listPublicProperties();
+
   return (
     <BookingProvider>
       {/* Outside PropertyProvider so the drawer can open the calculator, inside
           BookingProvider so the calculator can hand over to the booking modal. */}
       <MortgageProvider>
-        <PropertyProvider>
+        <PropertyProvider properties={properties}>
           {/* Inside both, because the shortlist panel opens the appointment modal
               and the property drawer. */}
           <ShortlistProvider>

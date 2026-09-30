@@ -2,20 +2,23 @@ import Image from "next/image"
 import { ArrowUpRight } from "lucide-react"
 
 import { CrossSiteLink } from "@/components/cross-site-link"
-import { PROPERTIES, getPropertyPriceValue } from "@/lib/properties"
+import { listPublicProperties } from "@/lib/cms/public"
+import { getPropertyPriceValue } from "@/lib/properties"
 
 /**
  * Interior-side cross-sell into the estate side.
  *
- * Built from `lib/properties.ts` - the same file the estate's card grid and
- * quick-view drawer read - so the two sites can never advertise different homes
- * at different prices, and a home added there appears here on the next build.
+ * Reads the same published rows the estate's grid and drawer read (lib/cms/public.ts), so the
+ * two sites can never advertise different homes at different prices, and a home published in
+ * the admin appears here on the next revalidation.
  *
- * Each card lands on `/?property=<slug>`, which the estate's PropertyProvider
- * reads on load and opens directly, so the visitor arrives at the home itself
- * rather than at a hero with a scroll to find.
+ * Each card lands on `/?property=<slug>`, which the estate's PropertyProvider reads on load
+ * and opens directly, so the visitor arrives at the home itself rather than at a hero with a
+ * scroll to find.
  */
-export function HomesWeDesign() {
+export async function HomesWeDesign() {
+  const properties = await listPublicProperties()
+
   return (
     <section id="homes" className="py-32 md:py-29 bg-secondary/50">
       <div className="container mx-auto px-6 md:px-12">
@@ -45,7 +48,7 @@ export function HomesWeDesign() {
         </div>
 
         <ul className="grid md:grid-cols-3 gap-6 md:gap-8">
-          {PROPERTIES.map((property) => {
+          {properties.map((property) => {
             // The estate hides a price that is still a placeholder ("GH₵ --");
             // the same rule applies here, and `getPropertyPriceValue` is the
             // shared definition of "has a real figure".

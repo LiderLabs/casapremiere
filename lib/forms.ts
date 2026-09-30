@@ -1,12 +1,6 @@
 // Email delivery for the two public forms.
 //
-// One module so the contact form and the appointment modal can never disagree
-// about where a submission goes or what it carries. A Formspree form id is not
-// a secret - it is posted from the visitor's browser - so it lives in code
-// rather than in an environment variable and the deployment stays env-free.
-//
-// Nothing here is server-only: the payload builders are pure and run in the
-// browser, which is where the submission is made.
+
 
 /** Formspree form id, i.e. https://formspree.io/f/<id>. */
 export const FORMSPREE_FORM_ID = "mrpbjpjn";

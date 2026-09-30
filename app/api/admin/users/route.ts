@@ -4,7 +4,8 @@
 import { NextResponse } from "next/server";
 
 import { assertSameOrigin, requireApiUser } from "@/lib/admin/auth";
-import { UserAdminError, createUser, listUsers } from "@/lib/admin/users";
+import { createUser, listUsers } from "@/lib/admin/users";
+import { errorResponse } from "@/lib/cms/errors";
 import { createUserSchema, fieldErrors, firstIssueMessage } from "@/lib/cms/validation";
 
 export const dynamic = "force-dynamic";
@@ -38,11 +39,6 @@ export async function POST(request: Request) {
     const { user, temporaryPassword } = await createUser(parsed.data, auth.user);
     return NextResponse.json({ user, temporaryPassword }, { status: 201 });
   } catch (error) {
-    if (error instanceof UserAdminError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
-    }
-
-    console.error("[cms] user create failed:", error);
-    return NextResponse.json({ error: "Could not create the user." }, { status: 500 });
+    return errorResponse(error, "Could not create the user.");
   }
 }

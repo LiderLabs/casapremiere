@@ -20,6 +20,7 @@ import { revokeUserSessions, type SessionUser } from "@/lib/admin/auth";
 import { checkPasswordPolicy, hashPassword, normalizeUsername } from "@/lib/admin/password";
 import { writeAudit } from "@/lib/cms/audit";
 import { getDb } from "@/lib/cms/db";
+import { CmsError } from "@/lib/cms/errors";
 import { sessions, users, type UserRole, type UserStatus } from "@/lib/cms/schema";
 import type { CreateUserInput, UpdateUserInput } from "@/lib/cms/validation";
 
@@ -41,12 +42,9 @@ export type AdminUser = {
 };
 
 /** An expected failure carrying the status the API should answer with. */
-export class UserAdminError extends Error {
-  constructor(
-    message: string,
-    readonly status: number = 400,
-  ) {
-    super(message);
+export class UserAdminError extends CmsError {
+  constructor(message: string, status: number = 400) {
+    super(message, status);
     this.name = "UserAdminError";
   }
 }

@@ -2,8 +2,6 @@
 
 import { useSyncExternalStore } from "react";
 
-import { getPropertyBySlug } from "@/lib/properties";
-
 /**
  * Shortlist state - one external store rather than React context.
  *
@@ -13,15 +11,20 @@ import { getPropertyBySlug } from "@/lib/properties";
  * cards and the drawer both read through `useSyncExternalStore` keeps a single
  * source of truth no matter how the providers are ordered.
  *
- * Only slugs are stored: lib/properties.ts stays the source of truth for the
- * content itself, so a price edit shows up immediately and a home removed from
- * the data file drops out of the list instead of rendering a broken card.
+ * Only slugs are stored, and only slugs that look like slugs: the catalogue now arrives
+ * per-request from the database (lib/cms/public.ts, spec D7), so this module cannot check a
+ * slug against it. Consumers that hold the catalogue resolve what they read - the panel drops
+ * homes that are no longer published rather than rendering a broken card, and the float counts
+ * what resolves - which keeps storage free of catalogue knowledge.
  */
 
 export const SHORTLIST_STORAGE_KEY = "casa.shortlist.v1";
 
 /** Long enough for a real house hunt, short enough to keep the WhatsApp text sane. */
 export const MAX_SHORTLIST = 10;
+
+/** Same shape the admin enforces on a slug: lowercase words joined by single hyphens. */
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const EMPTY: readonly string[] = Object.freeze([]);
 
@@ -56,8 +59,9 @@ function parse(raw: string | null): readonly string[] {
     return Object.freeze(
       slugs
         .filter((slug): slug is string => typeof slug === "string")
-        // Drop anything that is no longer in lib/properties.ts.
-        .filter((slug) => Boolean(getPropertyBySlug(slug)))
+        // A slug that no published home could carry never enters the list, so storage cannot
+        // accumulate junk from an old build or a hand-edited entry.
+        .filter((slug) => SLUG_PATTERN.test(slug))
         .slice(0, MAX_SHORTLIST),
     );
   } catch {

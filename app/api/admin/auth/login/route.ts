@@ -41,10 +41,19 @@ const GENERIC_FAILURE = "Invalid username or password";
 /** Every attempt from one address, so a scanner cannot keep probing. */
 const IP_ATTEMPT_LIMIT = 20;
 
-/** Failures per username in the window. Successes clear the counter. */
+/** The address window is deliberately wider than the account's own: a scanner is not a person. */
+const IP_ATTEMPT_WINDOW_MINUTES = 15;
+
+/** Failures per username before the account locks. A success clears the counter. */
 const USER_ATTEMPT_LIMIT = 5;
 
-const ATTEMPT_WINDOW_MINUTES = 15;
+/**
+ * The username window is the same length as the lockout on purpose, so the two cannot disagree:
+ * when a five-minute lock expires, the counter that triggered it has expired with it and the user
+ * gets their full five attempts back. A longer window would keep refusing a sign-in that the
+ * account lock had already released.
+ */
+const USER_ATTEMPT_WINDOW_MINUTES = LOCKOUT_MINUTES;
 
 export async function POST(request: Request) {
   if (!assertSameOrigin(request)) {
@@ -67,7 +76,7 @@ export async function POST(request: Request) {
   const ipLimit = await consumeRateLimit(
     `login:ip:${clientIpHash(request)}`,
     IP_ATTEMPT_LIMIT,
-    ATTEMPT_WINDOW_MINUTES,
+    IP_ATTEMPT_WINDOW_MINUTES,
   );
 
   if (!ipLimit.allowed) {
@@ -141,7 +150,7 @@ export async function POST(request: Request) {
     const userLimit = await consumeRateLimit(
       userKey,
       USER_ATTEMPT_LIMIT,
-      ATTEMPT_WINDOW_MINUTES,
+      USER_ATTEMPT_WINDOW_MINUTES,
     );
 
     await writeAudit({
@@ -156,10 +165,28 @@ export async function POST(request: Request) {
       },
     });
 
-    if (failure.locked || !userLimit.allowed) {
+    if (failure.locked) {
+      // The account is locked, not merely throttled, so say so - and for how long, computed from
+      // the row rather than guessed, so the header and the message cannot disagree.
+      const lockedForSeconds = Math.max(
+        1,
+        Math.ceil((new Date(failure.lockedUntil as string).getTime() - Date.now()) / 1000),
+      );
+
       return NextResponse.json(
-        { error: "Too many attempts. This account is locked for 15 minutes." },
-        { status: 429, headers: { "Retry-After": String(LOCKOUT_MINUTES * 60) } },
+        {
+          error: `Too many attempts. This account is locked for ${LOCKOUT_MINUTES} minutes.`,
+        },
+        { status: 429, headers: { "Retry-After": String(lockedForSeconds) } },
+      );
+    }
+
+    // Rate-limited rather than locked: this address has tried too often for now. It is *not*
+    // "locked for N minutes", so it must not claim to be.
+    if (!userLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please try again shortly." },
+        { status: 429, headers: { "Retry-After": String(userLimit.retryAfterSeconds) } },
       );
     }
 

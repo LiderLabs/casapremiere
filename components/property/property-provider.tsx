@@ -11,7 +11,7 @@ import {
 } from "react";
 import dynamic from "next/dynamic";
 
-import { getPropertyBySlug, type Property } from "@/lib/properties";
+import { findPropertyBySlug, type Property } from "@/lib/properties";
 
 // Loaded on first open, so the drawer markup, gallery and spec tables stay out
 // of the landing-page bundle (the same approach the booking modal uses).
@@ -21,6 +21,12 @@ const PropertyDrawer = dynamic(
 );
 
 type PropertyContextValue = {
+  /**
+   * The published catalogue, in grid order, as the server fetched it. Every consumer reads
+   * this rather than a module-level array, so a published edit is what the grid, the drawer
+   * pager and the shortlist all see.
+   */
+  properties: readonly Property[];
   /** Slug of the property currently in the drawer (kept while it animates out). */
   activeSlug: string | null;
   openProperty: (property: Property | string) => void;
@@ -52,7 +58,14 @@ function syncUrl(slug: string | null) {
   );
 }
 
-export function PropertyProvider({ children }: { children: ReactNode }) {
+export function PropertyProvider({
+  properties,
+  children,
+}: {
+  /** Published catalogue, read server-side (lib/cms/public.ts) and passed down once. */
+  properties: readonly Property[];
+  children: ReactNode;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
@@ -67,10 +80,10 @@ export function PropertyProvider({ children }: { children: ReactNode }) {
   const openProperty = useCallback(
     (property: Property | string) => {
       const slug = typeof property === "string" ? property : property.slug;
-      if (!getPropertyBySlug(slug)) return;
+      if (!findPropertyBySlug(properties, slug)) return;
       openSlug(slug);
     },
-    [openSlug],
+    [openSlug, properties],
   );
 
   const closeProperty = useCallback(() => {
@@ -81,19 +94,19 @@ export function PropertyProvider({ children }: { children: ReactNode }) {
   // Deep link: /?property=the-heights opens that home on load.
   useEffect(() => {
     const slug = new URLSearchParams(window.location.search).get("property");
-    if (slug && getPropertyBySlug(slug)) {
+    if (slug && findPropertyBySlug(properties, slug)) {
       setActiveSlug(slug);
       setHasOpened(true);
       setIsOpen(true);
     }
-  }, []);
+  }, [properties]);
 
   const value = useMemo(
-    () => ({ activeSlug, openProperty, closeProperty }),
-    [activeSlug, openProperty, closeProperty],
+    () => ({ properties, activeSlug, openProperty, closeProperty }),
+    [properties, activeSlug, openProperty, closeProperty],
   );
 
-  const property = activeSlug ? getPropertyBySlug(activeSlug) : undefined;
+  const property = activeSlug ? findPropertyBySlug(properties, activeSlug) : undefined;
 
   return (
     <PropertyContext.Provider value={value}>

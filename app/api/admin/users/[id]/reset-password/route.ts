@@ -8,7 +8,8 @@
 import { NextResponse } from "next/server";
 
 import { assertSameOrigin, requireApiUser } from "@/lib/admin/auth";
-import { UserAdminError, resetUserPassword } from "@/lib/admin/users";
+import { resetUserPassword } from "@/lib/admin/users";
+import { errorResponse } from "@/lib/cms/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -28,11 +29,6 @@ export async function POST(request: Request, { params }: Context) {
     const { user, temporaryPassword, sessionsRevoked } = await resetUserPassword(id, auth.user);
     return NextResponse.json({ user, temporaryPassword, sessionsRevoked });
   } catch (error) {
-    if (error instanceof UserAdminError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
-    }
-
-    console.error("[cms] password reset failed:", error);
-    return NextResponse.json({ error: "Could not reset the password." }, { status: 500 });
+    return errorResponse(error, "Could not reset the password.");
   }
 }
