@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +38,9 @@ export function SignInForm({ next }: { next: string }) {
       };
 
       if (!response.ok) {
-        setError(data.error ?? "Sign-in failed. Please try again.");
+        const message = data.error ?? "Sign-in failed. Please try again.";
+        setError(message);
+        toast.error(message);
         setPassword("");
         return;
       }
@@ -45,14 +48,16 @@ export function SignInForm({ next }: { next: string }) {
       router.replace(data.mustChangePassword ? "/admin/password" : next);
       router.refresh();
     } catch {
-      setError("Could not reach the server. Check your connection and try again.");
+      const message = "Could not reach the server. Check your connection and try again.";
+      setError(message);
+      toast.error(message);
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-8 space-y-5" noValidate>
+    <form onSubmit={onSubmit} className="space-y-5" noValidate>
       <div className="space-y-2">
         <Label htmlFor="username">Username</Label>
         <Input

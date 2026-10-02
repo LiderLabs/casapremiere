@@ -7,11 +7,15 @@ import { Menu, X } from "lucide-react";
 import { CrossSiteLink } from "@/components/cross-site-link";
 import { useBooking } from "@/components/booking/booking-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useSectionHref } from "@/components/use-section-href";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { openBooking } = useBooking();
+  // The header renders on `/` — where these sections live — and on `/properties`,
+  // where a bare `#gallery` would point at nothing. See components/use-section-href.ts.
+  const sectionHref = useSectionHref();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,7 +36,7 @@ export function Header() {
       <div className="flex items-center justify-between transition-all duration-300 px-2 pl-5 py-2">
                {/* Logo  */}
         <Link
-          href="#hero"
+          href={sectionHref("#hero")}
           aria-label="CASA Premier — home"
           className="relative block h-10 w-[60px] shrink-0 overflow-hidden rounded-md bg-transparent transition-all duration-300 hover:opacity-80"
         >
@@ -53,31 +57,31 @@ export function Header() {
             inside the pill's max-w-3xl at every desktop width. */}
         <nav className="hidden items-center gap-7 md:flex">
           <Link
-            href="#properties"
+            href={sectionHref("#properties")}
             className="text-sm transition-colors text-muted-foreground hover:text-foreground"
           >
             Properties
           </Link>
           <Link
-            href="#gallery"
+            href={sectionHref("#gallery")}
             className="text-sm transition-colors text-muted-foreground hover:text-foreground"
           >
             Gallery
           </Link>
           <Link
-            href="#services"
+            href={sectionHref("#services")}
             className="text-sm transition-colors text-muted-foreground hover:text-foreground"
           >
             Services
           </Link>
           <Link
-            href="#about"
+            href={sectionHref("#about")}
             className="text-sm transition-colors text-muted-foreground hover:text-foreground"
           >
             About
           </Link>
           <Link
-            href="#contact"
+            href={sectionHref("#contact")}
             className="text-sm transition-colors text-muted-foreground hover:text-foreground"
           >
             Contact
@@ -122,28 +126,28 @@ export function Header() {
         <div className="border-t border-border bg-background px-6 py-8 md:hidden rounded-b-2xl">
           <nav className="flex flex-col gap-6">
             <Link
-              href="#properties"
+              href={sectionHref("#properties")}
               className="text-lg text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
               Properties
             </Link>
             <Link
-              href="#gallery"
+              href={sectionHref("#gallery")}
               className="text-lg text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
               Gallery
             </Link>
             <Link
-              href="#services"
+              href={sectionHref("#services")}
               className="text-lg text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
               Services
             </Link>
             <Link
-              href="#about"
+              href={sectionHref("#about")}
               className="text-lg text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
@@ -158,7 +162,7 @@ export function Header() {
               Interiors
             </CrossSiteLink>
             <Link
-              href="#contact"
+              href={sectionHref("#contact")}
               className="text-lg text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >

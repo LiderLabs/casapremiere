@@ -1,4 +1,4 @@
-// The public read path's data: what `/` and `/interior` are allowed to show.
+// The public read path's data: what `/`, `/properties` and `/interior` are allowed to show.
 //
 // One query for the published rows and one for their media, mapped into the exact `Property`
 // shape lib/properties.ts declares. That is the shape six components already consume, so the
@@ -7,13 +7,13 @@
 //
 // Server-only: it touches the database.
 
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 
 import { getDb } from "@/lib/cms/db";
 import { getEnv } from "@/lib/cms/env";
 import { mediaColumns, toPropertyRecord, type MediaRecord } from "@/lib/cms/queries";
 import { properties, propertyMedia } from "@/lib/cms/schema";
-import type { Property } from "@/lib/properties";
+import { toPropertyImages, type Property } from "@/lib/properties";
 
 /**
  * Where an image is served from.
@@ -32,13 +32,10 @@ export function mediaSrc(key: string): string {
 }
 
 /** Row + media → the `Property` the drawer, the grid and the interior band render. */
-export function toPublicProperty(record: ReturnType<typeof toPropertyRecord>, media: MediaRecord[]): Property {
-  const card = media.find((item) => item.role === "card");
-  const hero = media.find((item) => item.role === "hero");
-  const gallery = media
-    .filter((item) => item.role === "gallery")
-    .sort((a, b) => a.position - b.position);
-
+export function toPublicProperty(
+  record: ReturnType<typeof toPropertyRecord>,
+  media: MediaRecord[],
+): Property {
   const fallbackAlt = `${record.name}, ${record.location}`;
 
   return {
@@ -56,24 +53,49 @@ export function toPublicProperty(record: ReturnType<typeof toPropertyRecord>, me
     highlights: record.highlights,
     specs: record.specs,
     amenities: record.amenities,
-    image: card ? mediaSrc(card.r2Key) : "",
-    hero: {
-      // A property with only a card image still needs an opening shot, and the card image is the
-      // one image every published home is guaranteed to have.
-      src: mediaSrc((hero ?? card)?.r2Key ?? ""),
-      alt: hero?.alt || card?.alt || fallbackAlt,
-    },
-    gallery: gallery.map((item) => ({ src: mediaSrc(item.r2Key), alt: item.alt || fallbackAlt })),
+    // Which row becomes the card, which the hero and which the gallery is lib/properties.ts's
+    // rule, shared with the admin's preview; only the URL is resolved here, where the env lives.
+    ...toPropertyImages(media, mediaSrc, fallbackAlt),
   };
 }
 
-/** Published properties only, in grid order. Drafts are invisible here by construction. */
-export async function listPublicProperties(): Promise<Property[]> {
+/**
+ * Which grid a read is for.
+ *
+ * `/` shows the homes flagged for the home page, `/properties` — the full catalogue — shows the
+ * ones flagged for it, and `all` is every published home.
+ *
+ * `all` is not a leftover. It is `/interior`'s view (that site presents the whole estate) and it
+ * is the contract of `/api/public/properties`, which the pixel gate and the migration script both
+ * read to discover slugs.
+ */
+export type PublicSurface = "home" | "listing" | "all";
+
+/**
+ * Published properties only, in grid order, filtered to the surface that asked.
+ *
+ * Drafts are invisible here by construction. Placement is invisible in the *shape* handed back:
+ * `Property` has no field saying where a home appears, so no component can begin branching on it —
+ * the flags decide whether a row is in the list, and nothing more. The default stays `"all"` so an
+ * existing caller keeps meaning "every published home".
+ */
+export async function listPublicProperties(surface: PublicSurface = "all"): Promise<Property[]> {
   const db = getDb();
+
+  // One extra predicate, chosen by the surface: the home flag, the listing flag, or neither.
+  const placement =
+    surface === "home"
+      ? eq(properties.showOnHome, true)
+      : surface === "listing"
+        ? eq(properties.showOnListing, true)
+        : undefined;
+
   const rows = await db
     .select()
     .from(properties)
-    .where(eq(properties.published, true))
+    .where(
+      placement ? and(eq(properties.published, true), placement) : eq(properties.published, true),
+    )
     .orderBy(asc(properties.position));
 
   if (rows.length === 0) return [];

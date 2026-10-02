@@ -1,28 +1,33 @@
 "use client";
 
-// The media manager (docs/cms-build-spec.md §8): upload, role, alt text and delete. The
-// browser resizes to WebP (≤2000px, q0.8, ≤1.5MB) before the PUT, so bytes go straight to
-// R2 and Vercel only ever signs. Card is single: assigning a second card demotes the first
-// to gallery — which is exactly what publish trusts. Replacing an image means uploading the
-// new one first, so the card never goes missing in between.
+// The media manager (docs/cms-build-spec.md §8, §9): upload, alt text and delete, grouped by the
+// three roles a listing actually has instead of by a role dropdown.
+//
+// The grouping is the point. "Which image is the card?" was one dropdown away from being answered
+// wrong; here the card section holds at most one image by construction, and uploading into it
+// demotes whatever was there to the gallery — the rule the server already enforces (queries.
+// confirmMedia) and the one publish trusts.
+//
+// The browser resizes to WebP (≤2000px, q0.8, ≤1.5MB) before the PUT, so bytes go straight to R2
+// and Vercel only ever signs. Alt text is edited in place and saved per image: it is the public
+// site's accessibility, not a detail to be batched.
+//
+// Outcomes are sonner toasts. Each row stacks on mobile and lays out side-by-side from sm, so the
+// preview, the alt field and the delete button are all reachable at 390px.
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ImagePlus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { mediaSrcClient } from "@/lib/cms/public-client";
 import type { MediaRecord } from "@/lib/cms/queries";
 
-type Role = "card" | "hero" | "gallery";
+type Role = MediaRecord["role"];
+
+const ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
 
 const MAX_BYTES = 1_500_000;
 const MAX_EDGE = 2000;
@@ -63,11 +68,11 @@ export function MediaManager({
   const router = useRouter();
 
   const [media, setMedia] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [role, setRole] = useState<Role>("gallery");
-  const [edits, setEdits] = useState<Record<string, { role: Role; alt: string }>>({});
+  /** Which section is mid-upload, so only that section's control goes quiet. */
+  const [uploading, setUploading] = useState<Role | null>(null);
+  /** Unsaved alt text, by image id. One field, because alt is the only thing editable per image. */
+  const [edits, setEdits] = useState<Record<string, string>>({});
 
   async function call(path: string, method: string, body?: unknown) {
     const response = await fetch(path, {
@@ -85,11 +90,14 @@ export function MediaManager({
     return data;
   }
 
-  async function upload(files: FileList | null) {
+  /**
+   * Resize, sign, PUT, confirm — for one section's images at a time. The role travels with the
+   * uploads rather than sitting in a dropdown beside them, so an image cannot be filed under a
+   * section nobody was looking at when they chose the file.
+   */
+  async function upload(files: FileList | null, role: Role) {
     if (!files || files.length === 0) return;
-    setBusy(true);
-    setError(null);
-    setNotice(null);
+    setUploading(role);
     try {
       const uploaded: MediaRecord[] = [];
       for (const file of Array.from(files)) {
@@ -117,33 +125,41 @@ export function MediaManager({
         if (confirmed.media) uploaded.push(confirmed.media);
       }
       setMedia((current) => [...current, ...uploaded]);
-      setNotice(`${uploaded.length} image(s) uploaded. Add alt text before publishing.`);
+      if (role === "card") {
+        // Said out loud, because it is the one upload that changes another image's role: the server
+        // demotes the old card to the gallery, and the list below will show it move.
+        toast.success("Card image set. The previous card image, if there was one, is now gallery.");
+      } else {
+        toast.success(`${uploaded.length} ${role} image(s) uploaded. Add alt text before publishing.`);
+      }
       router.refresh();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "The upload failed.");
+      toast.error(failure instanceof Error ? failure.message : "The upload failed.");
     } finally {
-      setBusy(false);
+      setUploading(null);
     }
   }
 
-  async function saveEdit(id: string) {
-    const patch = edits[id];
-    if (!patch) return;
+  async function saveAlt(id: string) {
+    const alt = edits[id];
+    if (alt === undefined) return;
     setBusy(true);
-    setError(null);
     try {
-      const data = await call(`/api/admin/media/${id}`, "PATCH", patch);
+      const data = await call(`/api/admin/media/${id}`, "PATCH", { alt });
       if (data.media) {
-        setMedia((current) => current.map((item) => (item.id === id ? (data.media as MediaRecord) : item)));
+        setMedia((current) =>
+          current.map((item) => (item.id === id ? (data.media as MediaRecord) : item)),
+        );
       }
       setEdits((current) => {
         const next = { ...current };
         delete next[id];
         return next;
       });
+      toast.success("Alt text saved.");
       router.refresh();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Could not update the image.");
+      toast.error(failure instanceof Error ? failure.message : "Could not update the image.");
     } finally {
       setBusy(false);
     }
@@ -151,143 +167,221 @@ export function MediaManager({
 
   async function remove(id: string) {
     setBusy(true);
-    setError(null);
     try {
       await call(`/api/admin/media/${id}`, "DELETE");
       setMedia((current) => current.filter((item) => item.id !== id));
+      toast.success("Image deleted.");
       router.refresh();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Could not delete the image.");
+      toast.error(failure instanceof Error ? failure.message : "Could not delete the image.");
     } finally {
       setBusy(false);
     }
   }
 
   const card = media.find((item) => item.role === "card");
+  const heroes = media.filter((item) => item.role === "hero");
+  const gallery = media.filter((item) => item.role === "gallery");
 
-  return (
-    <div>
-      {notice ? (
-        <p role="status" className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
-          {notice}
-        </p>
-      ) : null}
-      {error ? (
-        <p role="alert" className="mt-3 rounded-lg border border-destructive/40 px-4 py-3 text-sm">
-          {error}
-        </p>
-      ) : null}
-
-      <div className="mt-3 flex flex-wrap items-end gap-3">
-        <div className="grid gap-1.5">
-          <Label htmlFor="media-role">Role for new uploads</Label>
-          <Select value={role} onValueChange={(value) => setRole(value as Role)}>
-            <SelectTrigger id="media-role">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="card">card (the grid image — one per home)</SelectItem>
-              <SelectItem value="hero">hero (the drawer opening shot)</SelectItem>
-              <SelectItem value="gallery">gallery</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="media-files">Images</Label>
+  /**
+   * Hero and gallery are the same list with different copy, so they render through one builder
+   * rather than two near-identical blocks. Each section owns its own file input: the role belongs
+   * to the place the image is going, not to a setting to remember before choosing a file.
+   */
+  function imageSection(
+    role: "hero" | "gallery",
+    title: string,
+    description: string,
+    items: MediaRecord[],
+  ) {
+    return (
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="max-w-prose">
+            <h3 className="text-sm font-medium">
+              {title} · {items.length}
+            </h3>
+            <p className="text-xs text-muted-foreground">{description}</p>
+          </div>
           <Input
-            id="media-files"
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/avif"
             multiple
-            disabled={busy}
-            onChange={(event) => upload(event.target.files)}
+            accept={ACCEPT}
+            aria-label={`Add ${role} images`}
+            disabled={uploading !== null}
+            onChange={(event) => void upload(event.target.files, role)}
+            className="w-full sm:w-64"
           />
         </div>
-      </div>
-      <p className="mt-2 text-xs text-muted-foreground">
+
+        {items.length === 0 ? (
+          <p className="rounded-lg border border-dashed px-4 py-6 text-center text-xs text-muted-foreground">
+            Nothing here yet.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border rounded-lg border border-border">
+            {items.map((item) => {
+              const alt = edits[item.id] ?? item.alt;
+              const dirty = alt !== item.alt;
+              const src = mediaSrcClient(item.r2Key, publicBaseUrl);
+              return (
+                <li key={item.id} className="flex flex-col gap-3 p-3 sm:flex-row">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={src}
+                    alt={item.alt || `${slug} ${role} image`}
+                    className="h-32 w-full rounded object-cover sm:h-16 sm:w-24"
+                    loading="lazy"
+                  />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <p className="truncate font-mono text-xs text-muted-foreground">
+                      {item.r2Key}
+                    </p>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        value={alt}
+                        onChange={(event) =>
+                          setEdits((current) => ({ ...current, [item.id]: event.target.value }))
+                        }
+                        placeholder="Alt text — what this image shows"
+                        aria-label={`Alt text for ${item.r2Key}`}
+                        maxLength={240}
+                        className="flex-1"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          disabled={!dirty || busy}
+                          onClick={() => void saveAlt(item.id)}
+                        >
+                          Save alt
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={busy}
+                          onClick={() => void remove(item.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+
+      <p className="text-xs text-muted-foreground">
         Resized in the browser to WebP, longest edge 2000px, quality 0.8, max 1.5 MB.
-        {card ? "" : " Publishing needs a card image — mark one below."}
+        {card ? "" : " Publishing needs a card image — upload one below."}
       </p>
+
       {publicBaseUrl ? null : (
-        <p role="status" className="mt-2 rounded-lg border border-border px-4 py-2 text-xs">
+        <p role="status" className="rounded-lg border border-border px-4 py-2 text-xs">
           No public image domain is configured, so previews are served through the app
-          (<code>/api/media/…</code>). Set <code>R2_PUBLIC_BASE_URL</code> to serve them
-          straight from R2 instead.
+          (<code>/api/media/…</code>). Set <code>R2_PUBLIC_BASE_URL</code> to serve them straight
+          from R2 instead.
         </p>
       )}
 
-      {media.length === 0 ? (
-        <p className="mt-4 rounded-lg border border-border px-4 py-6 text-sm text-muted-foreground">
-          No images yet.
-        </p>
-      ) : (
-        <ul className="mt-4 divide-y divide-border rounded-lg border border-border">
-          {media.map((item) => {
-            const edit = edits[item.id] ?? { role: item.role, alt: item.alt };
-            const dirty = edit.role !== item.role || edit.alt !== item.alt;
-            const src = mediaSrcClient(item.r2Key, publicBaseUrl);
-            return (
-              <li key={item.id} className="flex flex-wrap gap-4 px-4 py-3">
-                {src ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={src}
-                    alt={item.alt || `${slug} image`}
-                    className="h-16 w-24 rounded object-cover"
-                    loading="lazy"
-                  />
-                ) : null}
-                <div className="min-w-52 flex-1 space-y-2">
-                  <p className="font-mono text-xs uppercase text-muted-foreground">
-                    {item.role} · {item.r2Key}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <Select
-                      value={edit.role}
-                      onValueChange={(value) =>
-                        setEdits((current) => ({
-                          ...current,
-                          [item.id]: { ...edit, role: value as Role },
-                        }))
-                      }
-                    >
-                      <SelectTrigger aria-label={`Role for ${item.r2Key}`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="card">card</SelectItem>
-                        <SelectItem value="hero">hero</SelectItem>
-                        <SelectItem value="gallery">gallery</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      value={edit.alt}
-                      onChange={(event) =>
-                        setEdits((current) => ({
-                          ...current,
-                          [item.id]: { ...edit, alt: event.target.value },
-                        }))
-                      }
-                      placeholder="Alt text (required for hero and gallery)"
-                      maxLength={240}
-                      className="min-w-52 flex-1"
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" size="sm" variant="secondary" disabled={!dirty || busy} onClick={() => saveEdit(item.id)}>
-                      Save
-                    </Button>
-                    <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => remove(item.id)}>
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="max-w-prose">
+            <h3 className="text-sm font-medium">Card image</h3>
+            <p className="text-xs text-muted-foreground">
+              The image the grids draw, and the one publish requires. There is at most one:
+              uploading another demotes this one to the gallery — the rule the server enforces.
+            </p>
+          </div>
+          <Input
+            type="file"
+            accept={ACCEPT}
+            aria-label="Set the card image"
+            disabled={uploading !== null}
+            onChange={(event) => void upload(event.target.files, "card")}
+            className="w-full sm:w-64"
+          />
+        </div>
+
+        {card ? (
+          <div className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={mediaSrcClient(card.r2Key, publicBaseUrl)}
+              alt={card.alt || `${slug} card image`}
+              className="h-32 w-full rounded object-cover sm:h-20 sm:w-28"
+              loading="lazy"
+            />
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <p className="truncate font-mono text-xs text-muted-foreground">{card.r2Key}</p>
+              <Input
+                value={edits[card.id] ?? card.alt}
+                onChange={(event) =>
+                  setEdits((current) => ({ ...current, [card.id]: event.target.value }))
+                }
+                placeholder="Alt text — what this image shows"
+                aria-label="Alt text for the card image"
+                maxLength={240}
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={(edits[card.id] ?? card.alt) === card.alt || busy}
+                  onClick={() => void saveAlt(card.id)}
+                >
+                  Save alt
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => void remove(card.id)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-10 text-center">
+            <ImagePlus className="size-6 text-muted-foreground" />
+            <p className="text-sm font-medium">No card image yet</p>
+            <p className="text-xs text-muted-foreground">
+              Publishing is blocked until one image is the card image. Choose a file above.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {imageSection(
+        "hero",
+        "Hero images",
+        "The drawer's opening shots, in order — the first one leads. A listing with no hero uses its card image instead.",
+        heroes,
+      )}
+
+      {imageSection(
+        "gallery",
+        "Gallery",
+        "The rest of the photography, shown after the hero.",
+        gallery,
       )}
     </div>
   );
 }
-

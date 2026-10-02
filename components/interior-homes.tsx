@@ -15,8 +15,13 @@ import { getPropertyPriceValue } from "@/lib/properties"
  * Each card lands on `/?property=<slug>`, which the estate's PropertyProvider reads on load
  * and opens directly, so the visitor arrives at the home itself rather than at a hero with a
  * scroll to find.
+ *
+ * The read deliberately names no surface: `all` is every published home, which is what this
+ * cross-sell means. A home kept off the landing page's grid and off the catalogue is still a
+ * home this site has designed, so placement never hides it here.
  */
 export async function HomesWeDesign() {
+  // No argument: every published home, whatever surface flags it carries.
   const properties = await listPublicProperties()
 
   return (

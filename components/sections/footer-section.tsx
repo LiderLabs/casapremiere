@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CrossSiteLink } from "@/components/cross-site-link";
 import { useBooking } from "@/components/booking/booking-provider";
+import { useSectionHref } from "@/components/use-section-href";
 import type { CrossSellSurface, CrossSiteTarget } from "@/lib/cross-sell";
 
 type FooterLink = {
@@ -24,6 +25,9 @@ const footerLinks: {
   service: FooterLink[];
 } = {
   explore: [
+    // The one link in this column that is a route rather than a landing-page
+    // section: the full catalogue, with its status filters.
+    { label: "All Properties", href: "/properties" },
     { label: "Properties", href: "#properties" },
     { label: "Gallery", href: "#gallery" },
     { label: "Developments", href: "#services" },
@@ -46,6 +50,9 @@ const footerLinks: {
 
 function FooterLinkList({ links }: { links: FooterLink[] }) {
   const { openBooking } = useBooking();
+  // The footer is shared with /properties, where the section anchors below have
+  // nothing to scroll to, so they resolve against the landing page instead.
+  const sectionHref = useSectionHref();
 
   return (
     <ul className="space-y-3">
@@ -69,7 +76,7 @@ function FooterLinkList({ links }: { links: FooterLink[] }) {
             </CrossSiteLink>
           ) : (
             <Link
-              href={link.href ?? "#"}
+              href={sectionHref(link.href ?? "#")}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {link.label}
@@ -82,6 +89,8 @@ function FooterLinkList({ links }: { links: FooterLink[] }) {
 }
 
 export function FooterSection() {
+  const sectionHref = useSectionHref();
+
   return (
     <footer className="bg-background">
       {/* Main Footer Content */}
@@ -89,7 +98,10 @@ export function FooterSection() {
         <div className="grid grid-cols-2 gap-12 md:grid-cols-4 lg:grid-cols-5">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1 lg:col-span-2">
-            <Link href="#hero" className="text-lg font-medium text-foreground">
+            <Link
+              href={sectionHref("#hero")}
+              className="text-lg font-medium text-foreground"
+            >
               CASA
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">

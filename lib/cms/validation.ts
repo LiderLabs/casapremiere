@@ -135,18 +135,53 @@ const propertyFields = {
  * slug is derived from the name on the server (`The Premier home` → `the-premier-home`), never
  * accepted from the client.
  */
-export const createPropertySchema = z.object({
-  name: propertyFields.name,
-  location: propertyFields.location,
-  status: propertyFields.status.optional().default("Available"),
-  meta: propertyFields.meta.optional().default(""),
-  price: propertyFields.price.optional().default(""),
-  description: propertyFields.description.optional().default(""),
-  intro: propertyFields.intro.optional(),
-  highlights: propertyFields.highlights.optional(),
-  specs: propertyFields.specs.optional(),
-  amenities: propertyFields.amenities.optional(),
-});
+/**
+ * Where a *live* home appears: the landing page's grid, the full catalogue, or both.
+ *
+ * Placement is deliberately not part of `propertyFields` / `updatePropertySchema`. A partial save
+ * bumps `updated_at`, and `updated_at` is what the list reads as "edited since live — publish
+ * pending" — so moving a home between surfaces through a PATCH would claim there is unpublished
+ * content when there is not. Both routes below go through queries.setPublished instead, which
+ * writes placements without touching the revision.
+ */
+export const placementFields = {
+  showOnHome: z.boolean().optional(),
+  showOnListing: z.boolean().optional(),
+};
+
+/** The publish route's body: placement only, and only when the caller wants to move something. */
+export const publishPropertySchema = z.object(placementFields);
+
+/**
+ * A new property, from whichever button the admin pressed.
+ *
+ * `intent` is required and has no default on purpose: "Save as draft" and "Publish now" are two
+ * different promises, so the caller has to make one. Drafting is allowed, never assumed — a form
+ * that forgets the field gets a 400 rather than a silent draft.
+ */
+export const createPropertySchema = z
+  .object({
+    name: propertyFields.name,
+    location: propertyFields.location,
+    status: propertyFields.status.optional().default("Available"),
+    meta: propertyFields.meta.optional().default(""),
+    price: propertyFields.price.optional().default(""),
+    description: propertyFields.description.optional().default(""),
+    intro: propertyFields.intro.optional(),
+    highlights: propertyFields.highlights.optional(),
+    specs: propertyFields.specs.optional(),
+    amenities: propertyFields.amenities.optional(),
+    /** `publish` publishes in the same request, after the draft row exists. */
+    intent: z.enum(["publish", "draft"]),
+    /** A new home defaults to both surfaces: that is what every published row did before. */
+    showOnHome: z.boolean().optional().default(true),
+    showOnListing: z.boolean().optional().default(true),
+  })
+  // Checked here, before the row exists: a property created with nowhere to go would otherwise
+  // have to fail after the insert, leaving a draft behind for a mistyped form.
+  .refine((value) => value.intent === "draft" || value.showOnHome || value.showOnListing, {
+    message: "Choose where it goes live — the home page, the listing page, or both.",
+  });
 
 /**
  * A partial update plus the optimistic-concurrency precondition: `updatedAt` is the value the

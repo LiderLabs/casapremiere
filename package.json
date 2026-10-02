@@ -9,6 +9,7 @@
     "cms:migrate": "tsx scripts/cms-migrate.ts",
     "cms:status": "tsx scripts/cms-status.ts",
     "cms:r2": "tsx scripts/r2-status.ts",
+    "cms:copy": "tsx scripts/cms-copy.ts",
     "migrate:properties": "tsx scripts/migrate-properties.ts",
     "admin:create-user": "tsx scripts/admin-create-user.ts",
     "admin:delete-user": "tsx scripts/admin-delete-user.ts",

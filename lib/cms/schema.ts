@@ -115,6 +115,16 @@ export const properties = sqliteTable(
     specs: text("specs").notNull().default("[]"),
     amenities: text("amenities").notNull().default("[]"),
     published: integer("published", { mode: "boolean" }).notNull().default(false),
+    /**
+     * Where a *live* home appears. Both default to 1, which is what every row meant before this
+     * column pair existed: a published home was on `/` and on `/properties` alike.
+     *
+     * These are destinations, not a second live switch — `published` is still the one draft/live
+     * flag, and a home with both set to 0 cannot be published (queries.publishBlockers). Keeping
+     * them off `published` is what lets Unpublish → Publish return a home to where it was.
+     */
+    showOnHome: integer("show_on_home", { mode: "boolean" }).notNull().default(true),
+    showOnListing: integer("show_on_listing", { mode: "boolean" }).notNull().default(true),
     /** Who put it live and when: the list shows both, so "who published this?" needs no audit dig. */
     publishedAt: text("published_at"),
     publishedBy: text("published_by"),

@@ -1,5 +1,12 @@
 import { redirect } from "next/navigation";
 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { getSessionUser } from "@/lib/admin/auth";
 
 import { SignInForm } from "./sign-in-form";
@@ -27,16 +34,21 @@ export default async function SignInPage({
   if (user) redirect(user.mustChangePassword ? "/admin/password" : next);
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6 py-12">
-      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-        CASA Première
-      </p>
-      <h1 className="mt-2 text-2xl font-medium">Content sign-in</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Accounts are created by an administrator in the admin itself.
-      </p>
-
-      <SignInForm next={next} />
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-4 py-12">
+      <Card>
+        <CardHeader>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            CASA Première
+          </p>
+          <CardTitle className="text-2xl">Content sign-in</CardTitle>
+          <CardDescription>
+            Accounts are created by an administrator in the admin itself.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SignInForm next={next} />
+        </CardContent>
+      </Card>
     </main>
   );
 }

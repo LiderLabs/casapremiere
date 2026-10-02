@@ -7,19 +7,19 @@ import {
   Calculator,
   ChevronLeft,
   ChevronRight,
-  Lamp,
-  LayoutGrid,
   MapPin,
   MessageCircle,
-  Ruler,
-  Sofa,
-  Sparkles,
-  Trees,
   X,
 } from "lucide-react";
 
 import { CrossSiteLink } from "@/components/cross-site-link";
 import { FadeImage } from "@/components/fade-image";
+import {
+  HIGHLIGHT_ICONS,
+  hasFigure,
+  propertyMetaLine,
+  SpecRow,
+} from "@/components/property/property-detail";
 import { ShortlistHeart } from "@/components/property/shortlist-heart";
 import {
   Sheet,
@@ -46,30 +46,12 @@ import {
 import { useProperty } from "@/components/property/property-provider";
 import { cn } from "@/lib/utils";
 
-const HIGHLIGHT_ICONS = {
-  space: LayoutGrid,
-  light: Lamp,
-  joinery: Ruler,
-  outdoor: Trees,
-  comfort: Sofa,
-  detail: Sparkles,
-} as const;
-
-/** A price with no digits is still a placeholder, so it stays hidden. */
-function hasFigure(value: string) {
-  return /\d/.test(value);
-}
-
-function SpecRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-6 border-b border-border py-3 last:border-b-0">
-      <span className="text-xs uppercase tracking-widest text-muted-foreground">
-        {label}
-      </span>
-      <span className="text-right text-sm text-foreground">{value}</span>
-    </div>
-  );
-}
+/**
+ * The icon map, the price rule and the spec row moved to components/property/property-detail.tsx
+ * when the admin needed a preview of a listing: the two views have to agree on what an unfinished
+ * price looks like and which icon a key resolves to, so the rules live in one file and both import
+ * them. Nothing about this drawer's markup changed.
+ */
 
 type PropertyDrawerProps = {
   property: Property | undefined;
@@ -114,12 +96,8 @@ export function PropertyDrawer({
   const viewingContext = `${property.name}, ${property.location}`;
   // The card shows `meta` exactly as authored; in the drawer an unfinished
   // placeholder (no digits yet) is dropped rather than shown as a stray dash.
-  const metaLine = [
-    property.location,
-    hasFigure(property.meta) ? property.meta : "",
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  // The rule is shared with the preview (components/property/property-detail.tsx).
+  const metaLine = propertyMetaLine(property);
 
   const showImage = (index: number) =>
     setImageIndex(((index % images.length) + images.length) % images.length);

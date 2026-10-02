@@ -1,11 +1,27 @@
 import Link from "next/link";
+import { CheckCircle2, Clock, FileText, History } from "lucide-react";
 
+import { PageHeader } from "@/components/admin/page-header";
+import { StatCard } from "@/components/admin/stat-card";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { requireUserPage } from "@/lib/admin/auth";
 import { formatAccra } from "@/lib/admin/format";
 import { listRecentAudit } from "@/lib/cms/audit";
 import { listProperties } from "@/lib/cms/queries";
-
-import { SignOutButton } from "./sign-out-button";
 
 // Behind the session, so it is rendered per request - never prerendered, never cached.
 export const dynamic = "force-dynamic";
@@ -21,112 +37,122 @@ export default async function AdminDashboardPage() {
   const drafts = properties.filter((property) => !property.published);
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <header className="flex items-start justify-between gap-6 border-b border-border pb-6">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            CASA Première
-          </p>
-          <h1 className="mt-2 text-2xl font-medium">Content</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+    <div className="space-y-8">
+      <PageHeader
+        title="Content"
+        description={
+          <>
             Signed in as{" "}
-            <span className="text-foreground">{user.name || user.username}</span> ·{" "}
-            <span className="uppercase">{user.role}</span>
-          </p>
-        </div>
-        <SignOutButton />
-      </header>
+            <span className="font-medium text-foreground">{user.name || user.username}</span> ·{" "}
+            <span className="uppercase tracking-wide">{user.role}</span>
+          </>
+        }
+        actions={
+          <Button asChild>
+            <Link href="/admin/properties">Manage properties</Link>
+          </Button>
+        }
+      />
 
-      <section className="mt-8 grid grid-cols-3 gap-3">
-        {[
-          { label: "Live", count: live.length },
-          { label: "Pending", count: pending.length },
-          { label: "Drafts", count: drafts.length },
-        ].map((stat) => (
-          <div key={stat.label} className="rounded-lg border border-border p-4">
-            <p className="text-2xl font-medium">{stat.count}</p>
-            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
-              {stat.label}
-            </p>
-          </div>
-        ))}
+      <section aria-label="Catalogue status" className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard
+          label="Live"
+          value={live.length}
+          hint="Published on both sites"
+          icon={CheckCircle2}
+          href="/admin/properties"
+        />
+        <StatCard
+          label="Pending changes"
+          value={pending.length}
+          hint="Live rows edited since publish"
+          icon={Clock}
+          href="/admin/properties"
+          tone={pending.length > 0 ? "warning" : "default"}
+        />
+        <StatCard
+          label="Drafts"
+          value={drafts.length}
+          hint="Not visible to visitors"
+          icon={FileText}
+          href="/admin/properties"
+        />
       </section>
 
       {pending.length > 0 ? (
-        <section className="mt-6 rounded-lg border border-border p-5">
-          <h2 className="text-sm font-medium">Publish pending</h2>
-          <ul className="mt-2 space-y-1 text-sm">
-            {pending.map((property) => (
-              <li key={property.slug}>
-                <Link
-                  className="underline underline-offset-4"
-                  href={`/admin/properties/${property.slug}`}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Publish pending</CardTitle>
+            <CardDescription>
+              These live properties were edited after they were last published.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-y divide-border">
+              {pending.map((property) => (
+                <li
+                  key={property.slug}
+                  className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 first:pt-0 last:pb-0"
                 >
-                  {property.name}
-                </Link>
-                <span className="text-muted-foreground">
-                  {" "}
-                  — edited by {property.updatedBy} at {formatAccra(property.updatedAt)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
+                  <Link
+                    className="text-sm font-medium underline-offset-4 hover:underline"
+                    href={`/admin/properties/${property.slug}`}
+                  >
+                    {property.name}
+                  </Link>
+                  <span className="text-xs text-muted-foreground">
+                    edited by {property.updatedBy} · {formatAccra(property.updatedAt)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
       ) : null}
 
-      <section className="mt-6 rounded-lg border border-border p-5">
-        <h2 className="text-sm font-medium">Catalogue</h2>
-        <p className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-          <Link className="underline underline-offset-4" href="/admin/properties">
-            Properties
-          </Link>
-          {user.role === "admin" ? (
-            <>
-              <Link className="underline underline-offset-4" href="/admin/users">
-                Users
-              </Link>
-              <Link className="underline underline-offset-4" href="/admin/settings">
-                Settings
-              </Link>
-            </>
-          ) : null}
-          <Link className="underline underline-offset-4" href="/admin/audit">
-            History
-          </Link>
-          <Link className="underline underline-offset-4" href="/">
-            Open the estate site
-          </Link>
-          <Link className="underline underline-offset-4" href="/interior">
-            Open the interior site
-          </Link>
-          <Link className="underline underline-offset-4" href="/admin/password">
-            Change password
-          </Link>
-        </p>
-      </section>
-
-      <section className="mt-10">
-        <h2 className="text-sm font-medium">Recent activity</h2>
-        <ul className="mt-3 divide-y divide-border rounded-lg border border-border">
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1.5">
+              <CardTitle className="text-base">Recent activity</CardTitle>
+              <CardDescription>The last 10 changes, most recent first.</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/admin/audit">View all</Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
           {activity.length === 0 ? (
-            <li className="px-4 py-3 text-sm text-muted-foreground">No activity yet.</li>
+            <Empty className="border border-dashed">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <History />
+                </EmptyMedia>
+                <EmptyTitle>No activity yet</EmptyTitle>
+                <EmptyDescription>
+                  Changes you and your team make will appear here.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
-            activity.map((entry) => (
-              <li
-                key={entry.id}
-                className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-2.5"
-              >
-                <span className="font-mono text-xs">{entry.action}</span>
-                <span className="text-sm text-muted-foreground">{entry.actor}</span>
-                <time className="text-xs text-muted-foreground" dateTime={entry.at}>
-                  {formatAccra(entry.at)}
-                </time>
-              </li>
-            ))
+            <ul className="divide-y divide-border">
+              {activity.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2.5 first:pt-0 last:pb-0"
+                >
+                  <span className="font-mono text-xs">{entry.action}</span>
+                  <span className="text-sm text-muted-foreground">{entry.actor}</span>
+                  <time className="text-xs text-muted-foreground" dateTime={entry.at}>
+                    {formatAccra(entry.at)}
+                  </time>
+                </li>
+              ))}
+            </ul>
           )}
-        </ul>
-      </section>
-    </main>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
-

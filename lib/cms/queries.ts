@@ -53,6 +53,9 @@ export type PropertyRecord = {
   published: boolean;
   publishedAt: string | null;
   publishedBy: string | null;
+  /** Destinations for a live home: the landing page's grid and/or the full catalogue. */
+  showOnHome: boolean;
+  showOnListing: boolean;
   createdAt: string;
   updatedAt: string;
   updatedBy: string;
@@ -115,6 +118,8 @@ export function toPropertyRecord(row: PropertyRow): PropertyRecord {
     published: row.published,
     publishedAt: row.publishedAt,
     publishedBy: row.publishedBy,
+    showOnHome: row.showOnHome,
+    showOnListing: row.showOnListing,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     updatedBy: row.updatedBy,
@@ -146,11 +151,21 @@ export async function getProperty(slug: string): Promise<PropertyRecord | undefi
  * card image is the one *media* requirement and is checked as soon as a property has any media at
  * all — before the upload pipeline exists (Phase 6) nothing could ever be published otherwise,
  * and after it every real listing has one.
+ *
+ * The destination rule is the other requirement: a home with both surfaces switched off would be
+ * live and invisible, which is indistinguishable from a publish that failed. `placement` is the
+ * caller's view of where the home should end up — the row's own flags when nobody said otherwise.
  */
-async function publishBlockers(row: PropertyRow): Promise<string[]> {
+async function publishBlockers(
+  row: PropertyRow,
+  placement: { showOnHome: boolean; showOnListing: boolean },
+): Promise<string[]> {
   const missing: string[] = [];
   if (!row.name.trim()) missing.push("a name");
   if (!row.location.trim()) missing.push("a location");
+  if (!placement.showOnHome && !placement.showOnListing) {
+    missing.push("a destination — the home page, the listing page, or both");
+  }
 
   const media = await listMedia(row.slug);
   const hasMedia = media.length > 0;
@@ -160,16 +175,28 @@ async function publishBlockers(row: PropertyRow): Promise<string[]> {
   return missing;
 }
 
-/** Both directions of the one switch: what is live is what `/` and `/interior` show. */
+/**
+ * Both directions of the one switch, and the only writer of where a live home appears.
+ *
+ * `placement` is optional: absent means "leave the destinations where they are", which is what a
+ * plain Publish/Unpublish from the list means. When it is present the row moves in the same
+ * statement — and, crucially, *without* touching `updated_at`. Placement is not an edit, so
+ * moving a home between surfaces must not raise the list's "Pending changes" badge.
+ */
 export async function setPublished(
   slug: string,
   published: boolean,
   actor: SessionUser,
+  placement?: { showOnHome?: boolean; showOnListing?: boolean },
 ): Promise<PropertyRecord> {
   const row = await requireRow(slug);
 
+  // Omitted means unchanged, so a caller that knows about one surface cannot blank the other.
+  const showOnHome = placement?.showOnHome ?? row.showOnHome;
+  const showOnListing = placement?.showOnListing ?? row.showOnListing;
+
   if (published) {
-    const missing = await publishBlockers(row);
+    const missing = await publishBlockers(row, { showOnHome, showOnListing });
     if (missing.length > 0) {
       throw new CmsError(`This property cannot go live yet — it needs ${missing.join(", ")}.`, 422);
     }
@@ -179,11 +206,19 @@ export async function setPublished(
 
   // Publishing is not an edit: `updated_at` stays where it was, so the revision an editor is
   // holding does not change under them and "pending changes" keeps meaning "edited since live".
+  // Unpublishing leaves the destinations alone on purpose, so Publish puts the home back exactly
+  // where it was rather than somewhere the admin has to remember to set again.
   await getDb()
     .update(properties)
     .set(
       published
-        ? { published: true, publishedAt: now, publishedBy: actor.username }
+        ? {
+            published: true,
+            publishedAt: now,
+            publishedBy: actor.username,
+            showOnHome,
+            showOnListing,
+          }
         : { published: false },
     )
     .where(eq(properties.slug, slug));
@@ -271,7 +306,14 @@ export async function reorderProperties(
   return listProperties();
 }
 
-/** Creates a draft: unpublished, at the end of the grid, with the standard spec rows seeded. */
+/**
+ * Creates a property at the end of the grid, with the standard spec rows seeded.
+ *
+ * Every property starts as a draft row, and one created through "Publish now" is published in the
+ * same call via `setPublished` — one code path, so a home made that way has met exactly the checks
+ * a later Publish from the list would run. Draft is the only state that can fail nothing, so it is
+ * the safe thing to leave behind if publishing refuses.
+ */
 export async function createProperty(
   input: CreatePropertyInput,
   actor: SessionUser,
@@ -311,6 +353,8 @@ export async function createProperty(
     specs: JSON.stringify(input.specs ?? PROPERTY_DEFAULT_SPECS),
     amenities: JSON.stringify(input.amenities ?? PROPERTY_DEFAULT_AMENITIES),
     published: false,
+    showOnHome: input.showOnHome,
+    showOnListing: input.showOnListing,
     createdAt: now,
     updatedAt: now,
     updatedBy: actor.username,
@@ -321,8 +365,26 @@ export async function createProperty(
     action: "property.create",
     entity: "property",
     entityId: slug,
-    payload: { name: input.name, status: input.status },
+    // `intent` is recorded because it is the decision the admin actually made: "created and
+    // published" and "created as a draft" are the same row and two different promises.
+    payload: {
+      name: input.name,
+      status: input.status,
+      intent: input.intent,
+      showOnHome: input.showOnHome,
+      showOnListing: input.showOnListing,
+    },
   });
+
+  if (input.intent === "publish") {
+    // The draft row is already committed, so a refusal here (a missing card image, no destination)
+    // comes back as a 422 from the create request and leaves the property on the list as a draft —
+    // visible, editable, and one Publish away once the gap is filled in.
+    return setPublished(slug, true, actor, {
+      showOnHome: input.showOnHome,
+      showOnListing: input.showOnListing,
+    });
+  }
 
   return toPropertyRecord(await requireRow(slug));
 }

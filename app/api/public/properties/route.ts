@@ -10,6 +10,9 @@ import { listPublicProperties } from "@/lib/cms/public";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  // No surface: this endpoint means "every published home", and it has to keep meaning that.
+  // The pixel gate and scripts/migrate-properties.ts discover slugs through this response, and
+  // a home missing from it would look deleted rather than merely unplaced.
   const response = NextResponse.json({ properties: await listPublicProperties() });
 
   response.headers.set(

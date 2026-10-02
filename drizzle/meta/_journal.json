@@ -15,6 +15,13 @@
       "when": 1790699610715,
       "tag": "0001_content_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790861474628,
+      "tag": "0002_property_placements",
+      "breakpoints": true
     }
   ]
 }

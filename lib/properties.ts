@@ -88,6 +88,46 @@ export type Property = {
   gallery: PropertyImage[];
 };
 
+/**
+ * The bits of a media row this rule needs. A structural subset, so the admin's `MediaRecord` and
+ * the public read path's rows can both be passed without importing a database module here.
+ */
+export type PropertyMediaLike = {
+  role: "card" | "hero" | "gallery";
+  r2Key: string;
+  alt: string;
+  position: number;
+};
+
+/**
+ * Media rows → the three image fields `Property` carries. One rule, two callers: the server read
+ * path (lib/cms/public.ts, resolving keys to public URLs) and the admin's preview, which has no
+ * database and resolves them with the client-safe `mediaSrcClient` instead. `src` is injected for
+ * exactly that reason — the rule about *which* row becomes which image is not up for re-deciding.
+ */
+export function toPropertyImages(
+  media: readonly PropertyMediaLike[],
+  src: (key: string) => string,
+  fallbackAlt: string,
+): { image: string; hero: PropertyImage; gallery: PropertyImage[] } {
+  const card = media.find((item) => item.role === "card");
+  const hero = media.find((item) => item.role === "hero");
+  const gallery = media
+    .filter((item) => item.role === "gallery")
+    .sort((a, b) => a.position - b.position);
+
+  return {
+    image: card ? src(card.r2Key) : "",
+    hero: {
+      // A property with only a card image still needs an opening shot, and the card image is the
+      // one image every published home is guaranteed to have.
+      src: src((hero ?? card)?.r2Key ?? ""),
+      alt: hero?.alt || card?.alt || fallbackAlt,
+    },
+    gallery: gallery.map((item) => ({ src: src(item.r2Key), alt: item.alt || fallbackAlt })),
+  };
+}
+
 export const PROPERTY_HOST = {
   name: "CASA Premier",
   role: "Sales & viewings",

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { PageHeader } from "@/components/admin/page-header";
 import { requireUserPage } from "@/lib/admin/auth";
 import { listUsers } from "@/lib/admin/users";
 
@@ -21,28 +21,14 @@ export default async function AdminUsersPage() {
   const users = await listUsers();
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <header className="flex flex-wrap items-start justify-between gap-6 border-b border-border pb-6">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            CASA Première
-          </p>
-          <h1 className="mt-2 text-2xl font-medium">Users</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Signed in as{" "}
-            <span className="text-foreground">{user.name || user.username}</span> ·{" "}
-            <span className="uppercase">{user.role}</span>
-          </p>
-        </div>
-        <Link
-          className="text-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4"
-          href="/admin"
-        >
-          Back to content
-        </Link>
-      </header>
-
+    <div className="space-y-8">
+      <PageHeader
+        title="Users"
+        description={
+          users.length === 1 ? "1 account." : `${users.length} accounts.`
+        }
+      />
       <UsersManager users={users} currentUserId={user.id} />
-    </main>
+    </div>
   );
 }

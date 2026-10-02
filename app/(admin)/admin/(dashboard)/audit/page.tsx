@@ -1,5 +1,20 @@
-import Link from "next/link";
+import { History } from "lucide-react";
 
+import { PageHeader } from "@/components/admin/page-header";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { requireUserPage } from "@/lib/admin/auth";
 import { formatAccra } from "@/lib/admin/format";
 import { listRecentAudit } from "@/lib/cms/audit";
@@ -13,48 +28,60 @@ export default async function AdminAuditPage() {
   const entries = await listRecentAudit(50);
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <header className="flex flex-wrap items-start justify-between gap-6 border-b border-border pb-6">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            CASA Première
-          </p>
-          <h1 className="mt-2 text-2xl font-medium">History</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Signed in as{" "}
-            <span className="text-foreground">{user.name || user.username}</span> ·{" "}
-            <span className="uppercase">{user.role}</span> · last 50 entries
-          </p>
-        </div>
-        <Link
-          className="text-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4"
-          href="/admin"
-        >
-          Back to content
-        </Link>
-      </header>
+    <div className="space-y-8">
+      <PageHeader
+        title="History"
+        description={
+          <>
+            The last 50 changes, most recent first. Signed in as{" "}
+            <span className="font-medium text-foreground">{user.name || user.username}</span> ·{" "}
+            <span className="uppercase tracking-wide">{user.role}</span>.
+          </>
+        }
+      />
 
-      <ul className="mt-8 divide-y divide-border rounded-lg border border-border">
-        {entries.length === 0 ? (
-          <li className="px-4 py-3 text-sm text-muted-foreground">No activity yet.</li>
-        ) : (
-          entries.map((entry) => (
-            <li key={entry.id} className="px-4 py-2.5">
-              <p className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <span className="font-mono text-xs">{entry.action}</span>
-                <time className="text-xs text-muted-foreground" dateTime={entry.at}>
-                  {formatAccra(entry.at)}
-                </time>
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {entry.actor}
-                {entry.entityId ? ` → ${entry.entityId}` : ""}
-                {entry.entity ? ` · ${entry.entity}` : ""}
-              </p>
-            </li>
-          ))
-        )}
-      </ul>
-    </main>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Activity log</CardTitle>
+          <CardDescription>
+            Every write names its actor. Each row keeps the action, who did it and which entity
+            it touched.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {entries.length === 0 ? (
+            <Empty className="border border-dashed">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <History />
+                </EmptyMedia>
+                <EmptyTitle>No activity yet</EmptyTitle>
+                <EmptyDescription>
+                  Publishing, editing and account changes will appear here.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <ul className="divide-y divide-border">
+              {entries.map((entry) => (
+                <li key={entry.id} className="py-3 first:pt-0 last:pb-0">
+                  <p className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <span className="font-mono text-xs">{entry.action}</span>
+                    <time className="text-xs text-muted-foreground" dateTime={entry.at}>
+                      {formatAccra(entry.at)}
+                    </time>
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {entry.actor}
+                    {entry.entityId ? ` → ${entry.entityId}` : ""}
+                    {entry.entity ? ` · ${entry.entity}` : ""}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
