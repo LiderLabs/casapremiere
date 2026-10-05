@@ -1,6 +1,6 @@
 "use client";
 
-// The media manager (docs/cms-build-spec.md §8, §9): upload, alt text and delete, grouped by the
+// The media manager (docs/cms.md Section 8, Section 9): upload, alt text and delete, grouped by the
 // three roles a listing actually has instead of by a role dropdown.
 //
 // The grouping is the point. "Which image is the card?" was one dropdown away from being answered

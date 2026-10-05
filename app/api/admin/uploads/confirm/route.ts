@@ -1,4 +1,4 @@
-// Records one uploaded image after the browser PUTs it to R2 (docs/cms-build-spec.md §8).
+// Records one uploaded image after the browser PUTs it to R2 (docs/cms.md Section 8).
 // Editors may confirm; the key must live under the slug's own prefix so one property cannot
 // claim another's bytes.
 

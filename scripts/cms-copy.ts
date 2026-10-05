@@ -6,7 +6,7 @@
 //   npm run cms:copy -- --turso --to .local/cms-backup.db --write        # export production
 //
 // Built for the account migration in docs/cms-runbook.md, and kept afterwards as the
-// export/backup tool (docs/cms-build-spec.md §10 lists `content:export` as planned): before this,
+// export/backup tool (docs/cms.md Section 10 lists `content:export` as planned): before this,
 // content could only leave the database by opening a client by hand.
 //
 // Two deliberate differences from the other CLI scripts:

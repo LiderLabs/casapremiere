@@ -4,7 +4,7 @@ One Next.js 16 application serving **two complete public websites and an admin C
 repository. The content lives in a database, and editors publish without a deploy: every content write
 revalidates the public routes, so a change is live in seconds.
 
-> **📘 Full documentation: [`docs/PROJECT-DOCUMENTATION.md`](docs/PROJECT-DOCUMENTATION.md)**
+> ** Full documentation: [`docs/PROJECT-DOCUMENTATION.md`](docs/PROJECT-DOCUMENTATION.md)**
 >
 > Routes, project structure, environment variables, cross-site links, the contact form, booking, the
 > admin CMS, the database, image storage, authentication, and the runbook for moving Turso and R2 to
@@ -18,16 +18,17 @@ revalidates the public routes, so a change is live in seconds.
 | `/properties` | **Estate site** | The full catalogue, filterable by status. Reads `listPublicProperties("listing")`. |
 | `/interior` | **Interior site** (`app/(interior)`) | Its own root layout, fonts and CSS. Reads `listPublicProperties("all")`. |
 | `/admin` | **Admin CMS** (`app/(admin)`) | Sign in at `/admin/signin`. Its own root layout, so neither site's CSS can bleed in. |
+| `/docs` | **Documentation** (`app/(docs)`) | The project documents in `docs/*.md`, compiled at build time. Also published as a site. |
 
-Each route group ships its own root layout and `globals.css`, so the three design systems can never
-bleed into each other. The two public sites were merged from two separate apps and verified
-pixel-identical (see [§1 of the documentation](docs/PROJECT-DOCUMENTATION.md#1-overview)).
+Each route group ships its own root layout and `globals.css`, so the four surfaces can never bleed
+into each other. The two public sites were merged from two separate apps and verified pixel-identical
+(see [Section 1 of the documentation](docs/PROJECT-DOCUMENTATION.md#1-overview)).
 
 ## Quick start
 
 ```bash
 npm install
-npm run dev            # http://localhost:3000  (/, /properties, /interior, /admin)
+npm run dev            # http://localhost:3000  (/, /properties, /interior, /admin, /docs)
 ```
 
 **Local development needs no configuration.** Outside production the app runs against
@@ -60,30 +61,35 @@ A standard Next.js project — no custom server, no external font/image CDNs
 
 **Any environment change needs a redeploy** — values are baked into a build, and a deployment still
 holding old credentials is the only genuinely dangerous state here. See
-[§6–§7 of the documentation](docs/PROJECT-DOCUMENTATION.md#6-deployment-vercel).
+[Sections 6–7 of the documentation](docs/PROJECT-DOCUMENTATION.md#6-deployment-vercel).
 
 ## Where things live
 
 | Subsystem | Start here | Doc |
 |---|---|---|
-| Public catalogue read | `lib/cms/public.ts` | [§2](docs/PROJECT-DOCUMENTATION.md#2-routes), [§11](docs/PROJECT-DOCUMENTATION.md#11-property-quick-view-drawer) |
-| Property quick-view drawer | `components/property/property-provider.tsx` | [§11](docs/PROJECT-DOCUMENTATION.md#11-property-quick-view-drawer) |
-| Cross-site links | `lib/site-links.ts`, `lib/cross-sell.ts`, `components/cross-site-link.tsx` | [§8](docs/PROJECT-DOCUMENTATION.md#8-cross-site-links) |
-| Contact form / email (Formspree) | `lib/forms.ts` | [§9](docs/PROJECT-DOCUMENTATION.md#9-contact-form-and-email-delivery-formspree) |
-| Appointment booking | `lib/booking.ts` | [§10](docs/PROJECT-DOCUMENTATION.md#10-appointment-booking) |
-| Admin CMS | `lib/cms/queries.ts`, `app/(admin)/**` | [§12](docs/PROJECT-DOCUMENTATION.md#12-cms-features-and-user-flow)–[§13](docs/PROJECT-DOCUMENTATION.md#13-cms-user-creation) |
-| Database schema | `lib/cms/schema.ts`, `drizzle/` | [§14](docs/PROJECT-DOCUMENTATION.md#14-database-structure) |
-| Image uploads (Cloudflare R2) | `lib/cms/r2.ts` | [§15](docs/PROJECT-DOCUMENTATION.md#15-image-storage-cloudflare-r2) |
-| Authentication | `lib/admin/auth.ts`, `proxy.ts` | [§16](docs/PROJECT-DOCUMENTATION.md#16-authentication-and-structure) |
-| Moving Turso / R2 accounts | `docs/cms-runbook.md` | [§17](docs/PROJECT-DOCUMENTATION.md#17-runbook--moving-turso-and-r2-to-new-accounts) |
+| Public catalogue read | `lib/cms/public.ts` | [Section 2](docs/PROJECT-DOCUMENTATION.md#2-routes), [Section 11](docs/PROJECT-DOCUMENTATION.md#11-property-quick-view-drawer) |
+| Property quick-view drawer | `components/property/property-provider.tsx` | [Section 11](docs/PROJECT-DOCUMENTATION.md#11-property-quick-view-drawer) |
+| Cross-site links | `lib/site-links.ts`, `lib/cross-sell.ts`, `components/cross-site-link.tsx` | [Section 8](docs/PROJECT-DOCUMENTATION.md#8-cross-site-links) |
+| Contact form / email (Formspree) | `lib/forms.ts` | [Section 9](docs/PROJECT-DOCUMENTATION.md#9-contact-form-and-email-delivery-formspree) |
+| Appointment booking | `lib/booking.ts` | [Section 10](docs/PROJECT-DOCUMENTATION.md#10-appointment-booking) |
+| Admin CMS | `lib/cms/queries.ts`, `app/(admin)/**` | [Section 12](docs/PROJECT-DOCUMENTATION.md#12-cms-features-and-user-flow)–[Section 13](docs/PROJECT-DOCUMENTATION.md#13-cms-user-creation) |
+| Database schema | `lib/cms/schema.ts`, `drizzle/` | [Section 14](docs/PROJECT-DOCUMENTATION.md#14-database-structure) |
+| Image uploads (Cloudflare R2) | `lib/cms/r2.ts` | [Section 15](docs/PROJECT-DOCUMENTATION.md#15-image-storage-cloudflare-r2) |
+| Authentication | `lib/admin/auth.ts`, `proxy.ts` | [Section 16](docs/PROJECT-DOCUMENTATION.md#16-authentication-and-structure) |
+| Moving Turso / R2 accounts | `docs/cms-runbook.md` | [Section 17](docs/PROJECT-DOCUMENTATION.md#17-runbook--moving-turso-and-r2-to-new-accounts) |
+| Documentation surface | `lib/docs.ts`, `app/(docs)/**`, `mkdocs.yml` | [Section 19](docs/PROJECT-DOCUMENTATION.md#19-documentation-surfaces) |
 
 ## Deeper documents
 
 | Document | What it holds |
 |---|---|
-| [`docs/PROJECT-DOCUMENTATION.md`](docs/PROJECT-DOCUMENTATION.md) | The canonical reference — everything above, including the runbook. |
-| [`docs/cms-build-spec.md`](docs/cms-build-spec.md) | The numbered build spec: schema, API, auth design, risks, and per-phase evidence tables (§17–§24). |
+| [`docs/PROJECT-DOCUMENTATION.md`](docs/PROJECT-DOCUMENTATION.md) | The canonical project reference — architecture, deployment, environment, the runbook, and an orientation to the CMS. |
+| [`docs/cms.md`](docs/cms.md) | The CMS document — what it does, the end-to-end user flow, the schema, the API, authentication, deployment, and the build history (Sections 17–24). |
 | [`docs/cms-runbook.md`](docs/cms-runbook.md) | The database/bucket migration on its own, with exact expected output per step and rollback. |
+
+All of them are also rendered inside the app at **`/docs`** and published as a site at
+**<https://liderlabs.github.io/casapremiere/>** — one source, three renderings
+([Section 19](docs/PROJECT-DOCUMENTATION.md#19-documentation-surfaces)).
 
 ## History note
 

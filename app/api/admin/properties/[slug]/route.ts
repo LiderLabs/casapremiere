@@ -1,5 +1,5 @@
 // One property: partial save with an `updatedAt` precondition (409 names the other editor),
-// and the delete action (admin-only, audit keeps the JSON) — docs/cms-build-spec.md §6.
+// and the delete action (admin-only, audit keeps the JSON) — docs/cms.md Section 6.
 
 import { NextResponse } from "next/server";
 
@@ -64,7 +64,7 @@ export async function PATCH(request: Request, { params }: Context) {
   try {
     const property = await updateProperty(slug, parsed.data, auth.user);
     // A save on a live home is a change to a live page, so the same two routes a publish
-    // refreshes are refreshed here too (docs/cms-build-spec.md D6).
+    // refreshes are refreshed here too (docs/cms.md D6).
     revalidatePublishedPages();
     return NextResponse.json({ property });
   } catch (error) {

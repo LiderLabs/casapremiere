@@ -1,4 +1,4 @@
-// The user list and user creation (docs/cms-build-spec.md §5.5). Admin-only, and the only
+// The user list and user creation (docs/cms.md Section 5.5). Admin-only, and the only
 // place a temporary password is ever returned — once, in the response that created it.
 
 import { NextResponse } from "next/server";

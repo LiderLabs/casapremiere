@@ -1,4 +1,4 @@
-// Sign-in. See docs/cms-build-spec.md §5.3 for the full flow.
+// Sign-in. See docs/cms.md Section 5.3 for the full flow.
 //
 // Every failure mode returns the same message, and an unknown username still costs an argon2
 // verification (against a throwaway hash) so the two cannot be told apart by response or by

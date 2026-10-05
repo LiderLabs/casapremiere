@@ -1,6 +1,6 @@
 "use client";
 
-// The users screen (docs/cms-build-spec.md §7). Deliberately plain: a create card, one card
+// The users screen (docs/cms.md Section 7). Deliberately plain: a create card, one card
 // per account, and the four things an admin actually does — change a role, disable an
 // account, reset a password, end someone's sessions.
 //

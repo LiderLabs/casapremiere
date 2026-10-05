@@ -1,6 +1,6 @@
 // Admin authentication: password hashing, database-backed sessions, roles and throttling.
 //
-// Design notes live in docs/cms-build-spec.md §5. In short:
+// Design notes live in docs/cms.md Section 5. In short:
 //
 // - Sessions are opaque random tokens; only sha256(token) is stored, so a dump of the
 //   sessions table cannot be replayed, and revocation is immediate (a JWT would leave a

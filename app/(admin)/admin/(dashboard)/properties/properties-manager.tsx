@@ -1,6 +1,6 @@
 "use client";
 
-// The property list (docs/cms-build-spec.md §7): every property in grid order, drafts
+// The property list (docs/cms.md Section 7): every property in grid order, drafts
 // included, with the card thumbnail, the Live / Draft / Pending badge, the last-published
 // line and the row actions. Every write goes through /api/admin/properties**, where the
 // role checks live — the UI hides what the API would refuse, so an editor never sees a

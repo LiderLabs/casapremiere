@@ -6,7 +6,7 @@
 //
 // Two halves, one file: the auth surface (users, sessions, rate_limits, audit_log — Phase 1)
 // and the content surface (properties, property_media, settings — Phase 2). The CHECK
-// constraints mirror docs/cms-build-spec.md §4 verbatim; they are the last line of defence
+// constraints mirror docs/cms.md Section 4 verbatim; they are the last line of defence
 // behind the zod schemas, so a bad row cannot be written even by a script or a pasted SQL
 // statement.
 

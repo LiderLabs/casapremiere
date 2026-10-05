@@ -1,13 +1,22 @@
-# CMS build spec — CASA Première admin (Turso + R2)
+# CASA Première admin CMS
 
-Status: approved for implementation · Owner: LiderLabs · Companion doc: `README.md` (site architecture).
+Owner: LiderLabs · Companion docs: `README.md` (site architecture), `docs/PROJECT-DOCUMENTATION.md` (project reference), `docs/cms-runbook.md` (operations).
+
+This document describes the admin CMS as it **is built and running** inside this Next app: what it does, the
+decisions behind it, how it works, the end-to-end user flow, and how it is deployed. The second half
+(Sections 17–24) is the history of how it was built — one section per phase, with the checks that were run at each
+step.
+
+**How to read this.** Sections 1–16 describe the CMS as it is (design, features, user flow, deployment, operations);
+Sections 17–24 are the build history. Section numbers and the `D#` decision IDs are stable: code comments and other
+docs cite them directly, so renumbering them would break those references.
 
 One admin, inside this Next app, for the property catalogue that **both** public sites read. Content lives in
 **Turso (libSQL)**, images in **Cloudflare R2**, and publishing makes `/` and `/interior` update in seconds.
 Authentication is username + password with database-backed sessions, and admins manage users in-app. No
 third-party CMS, no OAuth provider, no database server to run.
 
-## 1. Purpose, scope, non-goals
+## 1. What the CMS is
 
 **Purpose.** Let CASA staff manage property listings (later: business details, bookings) without a developer,
 while `/` and `/interior` keep their current rendering, behaviour and appearance.
@@ -21,7 +30,7 @@ bookings and shortlist tables · i18n.
 **Non-goals.** Changing either site's design or bundle, adding a vendor CMS, adding SSR to the public pages
 beyond what ISR needs.
 
-## 2. Decisions (locked)
+## 2. The decisions that shaped it
 
 | # | Decision |
 |---|---|
@@ -75,7 +84,7 @@ Three rules keep the two public sites untouched:
    `globals.css`), exactly as `(site)` and `(interior)` do today — so no admin CSS or code reaches `/` or `/interior`.
 2. The admin is **dynamic** (`force-dynamic`, never prerendered) while the public pages stay static + ISR.
 3. The public read path is the only change to existing public code, and it is confined to the six files listed in
-   §9 — types, helpers and every visual component keep their current contracts.
+   Section 9 — types, helpers and every visual component keep their current contracts.
 
 ## 4. Data model (SQLite, via Drizzle)
 
@@ -92,7 +101,7 @@ CREATE TABLE properties (
   specs TEXT NOT NULL DEFAULT '[]',      -- JSON {label,value}[]
   amenities TEXT NOT NULL DEFAULT '[]',  -- JSON string[]
   published INTEGER NOT NULL DEFAULT 0,
-  show_on_home INTEGER NOT NULL DEFAULT 1,    -- destinations for a LIVE home (§9, §24)
+  show_on_home INTEGER NOT NULL DEFAULT 1,    -- destinations for a LIVE home (Section 9, Section 24)
   show_on_listing INTEGER NOT NULL DEFAULT 1, -- both default 1 = what every published row meant before
   published_at TEXT, published_by TEXT,  -- who put it live, shown in the admin list
   created_at TEXT NOT NULL, updated_at TEXT NOT NULL, updated_by TEXT NOT NULL DEFAULT ''
@@ -140,7 +149,7 @@ the zod shapes below, which mirror `lib/properties.ts` exactly — `intro: strin
 `highlights: { icon: 'space'|'light'|'joinery'|'outdoor'|'comfort'|'detail', title, description }[]`,
 `specs: { label, value }[]`, `amenities: string[]`.
 
-`show_on_home` / `show_on_listing` are **destinations, not a second live switch** (§9): `published` is still the one
+`show_on_home` / `show_on_listing` are **destinations, not a second live switch** (Section 9): `published` is still the one
 draft/live flag, and the pair answers "where does a live home appear?". They are written by `setPublished` and by
 nothing else — never by a `PATCH`, because a partial save bumps `updated_at`, which is exactly what the admin list
 reads as *pending changes*. A home with both switched off cannot be published (`queries.publishBlockers`), and
@@ -167,7 +176,7 @@ admin-managed in-app and revocation (disable a user, "sign out everywhere", pass
 | Password policy | Minimum 8 characters, **no composition rules** (NIST guidance), plus a deny-list check (usernames ≥5 chars, `casapremiere`, `password`, `12345678`, the user's own name) | Length beats complexity theatre |
 | First admin | `npm run admin:create-user` — prompts locally, writes the hash to Turso. **No default credentials are ever shipped or seeded** | The only safe bootstrap |
 | Break-glass recovery | `npm run admin:reset-password -- --username <name>` (local, needs `TURSO_*` in `.env.local`) | A lost admin password is recoverable without a mail provider |
-| Self-service reset | **Not in v1** (no mail provider). An admin resets, and the user must change it at next sign-in | Fewer vendors; limitation is stated in §14 |
+| Self-service reset | **Not in v1** (no mail provider). An admin resets, and the user must change it at next sign-in | Fewer vendors; limitation is stated in Section 14 |
 | Where the DB credentials live | `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN`, server-only environment variables | Never `NEXT_PUBLIC_*`; the browser never sees a database or R2 secret |
 
 Timing-attack and enumeration defences: an unknown username is still verified against a throwaway hash, so
@@ -234,7 +243,7 @@ password. Every attempt is audited with the actor (or `unknown:<username>` for a
 
 | Method + path | Who | Behaviour |
 |---|---|---|
-| `POST /api/admin/auth/login` | public | §5.3 |
+| `POST /api/admin/auth/login` | public | Section 5.3 |
 | `POST /api/admin/auth/logout` | any session | `revoked_at = now`, cookie cleared |
 | `GET /api/admin/auth/me` | any session | `{ id, username, name, role, mustChangePassword }` |
 | `POST /api/admin/auth/password` | any session | Needs the current password; writes the new hash, clears `must_change_password`, **revokes every other session** |
@@ -253,7 +262,7 @@ forget them:
    guarantee stated where it is actually reachable.
 2. **The last active admin can never be removed.** This stays as the backstop behind rule 1: it
    holds even for a caller that has no session (a script, a future route), and it is verified at
-   the module level in §19.
+   the module level in Section 19.
 
 ### 5.6 Guarantees and the tests that prove them
 
@@ -277,14 +286,14 @@ Acceptance tests for this section:
 | `must_change_password` user opens any admin page | Forced to `/admin/password` first |
 | Publish from the UI | `/` and `/interior` show the change within seconds; drafts stay invisible |
 
-## 6. API contracts
+## 6. The API
 
 | Method + path | Who | Notes |
 |---|---|---|
 | `GET /api/public/properties` | public | Published only, `position` order, mapped to `Property[]`, `s-maxage=60` |
 | `GET /api/admin/properties` | editor | All rows including drafts, plus `pendingChanges` (`updated_at > published_at`) and `publishedBy` |
-| `POST /api/admin/properties` | editor | Creates a property from an explicit `intent` — `publish` (live in the same request) or `draft` (the fallback is never assumed, so a body without it is a `400`); the slug is derived from the name, uniqueness-checked, then frozen (§7.2, §24) |
-| `PATCH /api/admin/properties/[slug]` | editor | Partial update of *content*, zod-validated, `updated_at` precondition → `409` with `{ changedBy, changedAt }` on conflict; refuses a slug change; revalidates the public routes. Placement is deliberately not patchable — it goes through publish (§4, §9) |
+| `POST /api/admin/properties` | editor | Creates a property from an explicit `intent` — `publish` (live in the same request) or `draft` (the fallback is never assumed, so a body without it is a `400`); the slug is derived from the name, uniqueness-checked, then frozen (Section 7.2, Section 24) |
+| `PATCH /api/admin/properties/[slug]` | editor | Partial update of *content*, zod-validated, `updated_at` precondition → `409` with `{ changedBy, changedAt }` on conflict; refuses a slug change; revalidates the public routes. Placement is deliberately not patchable — it goes through publish (Section 4, Section 9) |
 | `POST /api/admin/properties/reorder` | admin | `{ slugs: string[] }` → `position` rewritten in one batch; revalidates the public routes |
 | `POST /api/admin/properties/[slug]/publish` | editor | Sets `published = 1`, `published_at`, `published_by` and, when the body carries them, the destinations `{ showOnHome, showOnListing }`; refuses a home with nowhere to appear (`422`); revalidates all three routes; audits |
 | `POST /api/admin/properties/[slug]/unpublish` | editor | `published = 0`; revalidates; audits (the self-undo path) |
@@ -301,11 +310,11 @@ insufficient role; `409` conflict; `422` validation on publish preconditions (e.
 mutation writes one `audit_log` row inside the same batch as the change.
 
 **Revalidation is a property of the write, not of publishing.** Since all three public routes render the
-database (§9), any write a visitor can see must reach them: publish/unpublish did from Phase 4, and
+database (Section 9), any write a visitor can see must reach them: publish/unpublish did from Phase 4, and
 Phase 7 extended it to every content mutation in the table above — a save, a reorder, a new card image,
 an alt-text fix, a delete. They all call one helper (`revalidatePublishedPages()` in
 `lib/cms/revalidate.ts`), which owns the path list — `/`, `/properties` and `/interior` since the
-listing page got its own surface (§9) — and publish and unpublish echo it back as
+listing page got its own surface (Section 9) — and publish and unpublish echo it back as
 `revalidated: ["/", "/properties", "/interior"]`, so the paths are visible in the response — and the
 routes cannot drift apart: a missing path is a one-line fix rather than a hunt.
 
@@ -328,9 +337,9 @@ Mirrors the existing `Property` type (`lib/properties.ts`) so nothing downstream
 
 - **Basics:** name (slug derived on create, then immutable), location, status (`Available` · `Under construction` ·
   `Sold` · `Coming soon`), meta, price, description.
-- **Publishing:** where the home appears — *landing page* and/or *properties page* (§9) — with Publish, Unpublish,
+- **Publishing:** where the home appears — *landing page* and/or *properties page* (Section 9) — with Publish, Unpublish,
   **Save destinations** (a live home whose destinations changed) and **Preview**. The card states plainly what
-  publishing will be refused for, so a `422` is never the first news of it (§24).
+  publishing will be refused for, so a `422` is never the first news of it (Section 24).
 - **Price and meta carry the existing rule verbatim:** *"a value with no digits is treated as unfinished and hidden"*
   — the drawer's behaviour is preserved, not re-implemented.
 - **Intro:** one paragraph per line.
@@ -342,7 +351,7 @@ Mirrors the existing `Property` type (`lib/properties.ts`) so nothing downstream
   drawer's "On request" line.
 - **Amenities:** repeatable single-line entries, same suggestion list.
 - **Empty rows are dropped, not saved:** a row the editor is only holding because "Add" was pressed is filtered out of
-  the payload, while a *partly* filled row is kept so the schema's own message is what the admin reads (§24).
+  the payload, while a *partly* filled row is kept so the schema's own message is what the admin reads (Section 24).
 - **Media:** three sections rather than a role dropdown — **card** (single by construction: uploading another demotes
   the current one to the gallery, which is the rule the server enforces), **hero** (the drawer's opening shots) and
   **gallery**. Alt text is edited and saved per image; there is no reorder (position is assigned on upload).
@@ -355,10 +364,10 @@ Mirrors the existing `Property` type (`lib/properties.ts`) so nothing downstream
 | Area | Requirement |
 |---|---|
 | Validation | One zod schema per write path (`lib/cms/validation.ts`), enforced on the server and mirrored by what a screen will let you type — closed value sets come from `lib/properties.ts`, lengths from the same constants, and a structured row is typed as the shape the drawer renders. The admin does not use `react-hook-form` (that stays a property of the public booking and contact forms); its screens hand-roll the state and show the server's own message, which is the one that has to be right |
-| Creating | Two buttons, one form: **Publish now** and **Save as draft**, each sending an explicit `intent` — drafting is allowed but never assumed, so the request without one is a `400`. Publishing in the same request runs the same checks a later Publish would (§24) |
+| Creating | Two buttons, one form: **Publish now** and **Save as draft**, each sending an explicit `intent` — drafting is allowed but never assumed, so the request without one is a `400`. Publishing in the same request runs the same checks a later Publish would (Section 24) |
 | Saving | Dirty tracking, optimistic update, `sonner` toasts, unsaved-changes guard on navigation |
 | Conflicts | `updated_at` precondition → *"changed by `<username>` at `<time>`"* panel with Reload / Overwrite |
-| **Publishing** | Confirmation dialog naming the destinations (*"It appears on the landing page only in seconds"*), and a **Preview** that renders the editor's *unsaved* state as the grid card and as the listing — the last look before something goes live (§24). Editors keep **Unpublish** as the undo, and destination changes on a live home are saved by publishing again rather than by a save, so they never raise a phantom "pending changes" |
+| **Publishing** | Confirmation dialog naming the destinations (*"It appears on the landing page only in seconds"*), and a **Preview** that renders the editor's *unsaved* state as the grid card and as the listing — the last look before something goes live (Section 24). Editors keep **Unpublish** as the undo, and destination changes on a live home are saved by publishing again rather than by a save, so they never raise a phantom "pending changes" |
 | Drafts | `published = 0` never appears publicly; the list flags a live row edited since its last publish as **Pending changes** |
 | Deleting | Admin-only, requires typing the slug; the audit row keeps the full deleted JSON |
 | Images | jpeg/png/webp/avif only · resized client-side to ≤2000 px WebP · ≤1.5 MB after resize · alt text required (it is the public site's accessibility) · type, size and extension re-checked server-side |
@@ -366,6 +375,43 @@ Mirrors the existing `Property` type (`lib/properties.ts`) so nothing downstream
 | Mobile | Usable at 390 px; the repo's `Sheet`/`Dialog` patterns are reused |
 | Isolation | `app/(admin)/layout.tsx` is its own root layout, so no admin code or CSS reaches `/` or `/interior` |
 | Timezone | All timestamps rendered as `GMT (Accra)`, matching `BOOKING_TIME_ZONE_LABEL` |
+
+### 7.3 The user flow, end to end
+
+The admin is a closed loop: sign in, change content, publish, and see who did what. Every step is gated
+twice — `proxy.ts` redirects an unauthenticated request away from `/admin/**` before any page runs, and each
+page or route re-checks the session (`requireUserPage()` / `requireApiUser()`).
+
+1. **Sign in** (`/admin/signin`). A brand-new account carries `must_change_password = 1`, so its first
+   sign-in lands on `/admin/password` and reaches nothing else until the password is changed.
+2. **Dashboard** (`/admin`) — three counts (*Live*, *Pending changes*, *Drafts*), a **Publish pending**
+   shortcut when a live home has been edited since it was last published, and the last ten audit rows.
+3. **Properties** (`/admin/properties`) — every home with a thumbnail, a status badge (*Live* / *Pending* /
+   *Draft*) and a **placement** label (which surface it is on, from `lib/cms/placement.ts`). *New property*
+   offers **Publish now** or **Save as draft** — an explicit choice, never a default — and opens the new
+   editor at its media section. Admin-only: drag-to-reorder and a slug-typed delete.
+4. **Editor** (`/admin/properties/[slug]`) — one page of sectioned saves: details, intro, **repeatable typed
+   rows** for highlights, specs and amenities, and a **Publishing card** with the two destinations
+   (`show_on_home` / `show_on_listing`) and a **Preview** that renders the *unsaved* state through the grid's
+   own card and the drawer's own detail rules. Each save carries the `updatedAt` revision it was based on, so
+   two editors cannot silently overwrite each other — a stale write returns `409` naming who saved first.
+5. **Media** (the `#media` section of the editor) — three grids (**card**, **hero**, **gallery**). Uploads are
+   resized in the browser, sent straight to R2 with a presigned `PUT`, and confirmed into `property_media`
+   (see Section 8).
+6. **Publish / Unpublish** — from the list or the Publishing card, with destinations. Every write (publish,
+   save, reorder, delete, media change) calls `revalidatePublishedPages()`, so `/`, `/properties` and
+   `/interior` refresh within seconds — no commit, no redeploy.
+7. **History** (`/admin/audit`) — every mutation and every sign-in event, most recent first, with the actor
+   and a small JSON payload (never a password, never a session token).
+
+**Behaviours worth knowing.** Publishing a home is what sets its placement, so moving a home between surfaces
+never raises a phantom *Pending changes* badge. A live home edited since its last publish is flagged
+`pendingChanges` — that is the dashboard's *Pending changes* count and the list's *Pending* badge. Publishing
+refuses a home the public card could not render (`422`, the same `publishBlockers` rule the preview uses).
+Deleting keeps the row in the audit trail, media keys included, because the row itself is gone. Reorder
+rewrites every `position` in one batch, so the grid can never end up half-sorted. Settings are admin-only and
+fall back to the value still hard-coded in `lib/booking.ts` / `lib/forms.ts` when a key has never been saved.
+Audit writes are non-fatal — a failure to record history never fails the action it describes.
 
 ## 8. Media pipeline
 
@@ -385,7 +431,7 @@ the site origin. The R2 API token is scoped to this one bucket and lives only in
 
 ## 9. Public delivery, publish and rollback
 
-**Read path (D7).** Six files change, and only in the way described here — the plan; §23 has the
+**Read path (D7).** Six files change, and only in the way described here — the plan; Section 23 has the
 delivered set and its evidence:
 
 | File | Change |
@@ -412,9 +458,9 @@ deleted quietly drops out instead of rendering a blank card.
 the body carries, then revalidates all three public routes — the change is live in seconds with no git
 commit and no redeploy. Unpublish does the reverse, and deliberately leaves the destinations alone so a
 later publish returns the home to where it was. Since Phase 7 the same revalidation runs after *every*
-content write (§6), because the routes read the database rather than a build-time constant.
+content write (Section 6), because the routes read the database rather than a build-time constant.
 
-**Placement — which grid a live home appears in.** `show_on_home` and `show_on_listing` (§4) let one home
+**Placement — which grid a live home appears in.** `show_on_home` and `show_on_listing` (Section 4) let one home
 be live on the landing page's grid, on the full catalogue, or on both. It cannot be on neither:
 `publishBlockers` refuses that with a `422`, and the editor's Publishing card says so before the request
 is sent. Three readers, three surfaces, one named argument (`lib/cms/public.ts`, `PublicSurface`):
@@ -479,7 +525,7 @@ npm run cms:status -- --turso                 # confirm: 3 migrations, all 8 tab
 |---|---|---|
 | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | Vercel + `.env.local` | Server-only; never `NEXT_PUBLIC_*`. Locally they live in `.env.turso.local` so `npm run dev` keeps writing to the file database |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Vercel + `.env.local` | Used only to sign uploads and delete objects. Absent → `/api/admin/uploads/*` answers `503` instead of failing oddly |
-| `R2_PUBLIC_BASE_URL` | Vercel + `.env.local` | The public serving base (`https://images.casapremiere.com`, or the `r2.dev` URL). Unset → images are read through `GET /api/media/<key>` (§22.1), so it is optional, not required |
+| `R2_PUBLIC_BASE_URL` | Vercel + `.env.local` | The public serving base (`https://images.casapremiere.com`, or the `r2.dev` URL). Unset → images are read through `GET /api/media/<key>` (`docs/cms.md` Section 22.1), so it is optional, not required |
 | `APP_ORIGIN` | Vercel + `.env.local` | Exact origin for the CSRF `Origin` check |
 | `IP_HASH_SALT` | Vercel + `.env.local` | Salt for rate-limit keys (`sha256(ip + salt)`) |
 | `CMS_EXPORT_TOKEN` | Vercel (optional) | Protects the scheduled export endpoint |
@@ -510,6 +556,26 @@ somewhere else without editing anything:
 $env:TURSO_DATABASE_URL="file:./.local/cms.db"; npm run cms:migrate   # PowerShell
 ```
 
+### Deployment
+
+The admin ships with the same Vercel deployment as the two public sites — there is no separate service to
+run. What the CMS adds is environment and ordering:
+
+- **Environment.** The two `TURSO_*` values, the four signing `R2_*` values, `APP_ORIGIN` and `IP_HASH_SALT`
+  must exist in the Vercel project (table above); `R2_PUBLIC_BASE_URL` is optional. Nothing is
+  `NEXT_PUBLIC_*`. A change to any of them only takes effect after a **redeploy** — env vars are read at
+  build/start, not live.
+- **Migrations reach the database before the code that needs them.** Run `npm run cms:migrate -- --turso`
+  against production *before* deploying a build that depends on the new tables or columns; the app never
+  migrates on boot.
+- **`APP_ORIGIN` must match the deployed origin exactly**, or every state-changing admin route fails its CSRF
+  check.
+- **R2 keys are content-addressed and store no bucket name or account id** (`properties/<slug>/<hash>.<ext>`),
+  so moving buckets is a copy, never a code change (`docs/cms-runbook.md`).
+
+The Vercel project itself, the env-var names and the domain are described in `PROJECT-DOCUMENTATION.md` Section 6
+and Section 7; moving Turso and R2 to new accounts is `PROJECT-DOCUMENTATION.md` Section 17 and `docs/cms-runbook.md`.
+
 ## 11. Migration of the existing three properties
 
 `scripts/migrate-properties.ts` (run with `npx tsx --tsconfig tsconfig.json`, which honours the `@/*` alias):
@@ -522,34 +588,34 @@ $env:TURSO_DATABASE_URL="file:./.local/cms.db"; npm run cms:migrate   # PowerShe
    same images, `published = 1`, `published_by = "migration"`.
 5. Leave the other section images — hero, gallery, technology, editorial — in `public/images/` untouched. The
    `PROPERTIES` array itself stays in `lib/properties.ts`: nothing in the app reads it any more, but it is the
-   seed source for a re-run of this script and the pixel baseline for the Phase 7 gate (§23).
+   seed source for a re-run of this script and the pixel baseline for the Phase 7 gate (Section 23).
 
-Verification gate: the six-file read-path change (§9) plus this migration must leave `/` and `/interior`
+Verification gate: the six-file read-path change (Section 9) plus this migration must leave `/` and `/interior`
 pixel-identical at 1440 px and 390 px. That diff is the release gate for the whole phase. The markup half of it
-was run in Phase 7 against a production build and a local file database (§23, 75,989 / 39,271 characters
+was run in Phase 7 against a production build and a local file database (Section 23, 75,989 / 39,271 characters
 identical); the two-width screenshot pass is the remaining item, and it happens against the deployed preview in
 Phase 8, where the legacy `/images/…` paths and the resized WebP keys are both served for real.
 
-## 12. Verification checklist
+## 12. Verification
 
 Local (dev server + local `file:` database):
 
 - [x] `npm run dev` against `file:./.local/cms.db`: create → edit → reorder → upload → publish → unpublish → delete
 - [x] Sign-in paths: wrong password, unknown username, lockout after 5, disabled user, forced password change
-      (Phase 7 — §23; `node .local/verify/auth-e2e.mjs`, 82/82 checks against the production server)
+      (Phase 7 — Section 23; `node .local/verify/auth-e2e.mjs`, 82/82 checks against the production server)
 - [x] Authorization: signed-out API → `401`; editor publish → allowed; editor delete/reorder/users/settings → `403`
-      (Phase 7 — §23; the same run: one `403 Forbidden` body for all four, `401` JSON for a signed-out API read)
+      (Phase 7 — Section 23; the same run: one `403 Forbidden` body for all four, `401` JSON for a signed-out API read)
 - [x] An editor's unpublished edit is invisible on `/` and `/interior`; publishing makes it appear
 - [x] The same for every other content write: a save, a reorder, a media change and a delete all reach both routes
-      (Phase 7 — §23; re-run in the authoring pass with all three paths — §24; on the production server against
+      (Phase 7 — Section 23; re-run in the authoring pass with all three paths — Section 24; on the production server against
       `file:./.local/cms.db`, 22/22 checks)
 - [x] Drafting is never assumed and publishing is never forced: create without an `intent` → `400`; create with
       `intent: "publish"` → live in the same request; both destinations off → `422` naming "a destination"; a
       placement change on a live home moves it without raising a phantom *Pending changes*
-      (Authoring pass — §24; `.local/smoke-properties.mjs`, every check PASS against a scratch database)
+      (Authoring pass — Section 24; `.local/smoke-properties.mjs`, every check PASS against a scratch database)
 - [x] `/` and `/interior` render the database: the markup diff against the pre-refactor captures is empty
-      (`node .local/verify/pixel-gate.mjs`, §23 and §24 — `/interior` is byte-identical; `/` differs only inside the
-      section header that predates this work, and §24 shows the rest of the page matching to the character)
+      (`node .local/verify/pixel-gate.mjs`, Section 23 and Section 24 — `/interior` is byte-identical; `/` differs only inside the
+      section header that predates this work, and Section 24 shows the rest of the page matching to the character)
 
 Production (Vercel preview → production):
 
@@ -597,23 +663,23 @@ Production (Vercel preview → production):
 4. **Admin location** — `casapremiere.com/admin` (current spec) or a separate hostname such as `admin.casapremiere.com`?
 5. **Editor guide** — should `/admin` link to a short in-app "how to add a home" page, in addition to `docs/`?
 
-## 16. Implementation order
+## 16. The order it was built in
 
-1. Phase 1 — `(admin)` route group, session core, sign-in and forced password change. **Done — see §17.**
-2. Phase 2 — Drizzle schema + migrations against the local file DB, then Turso. **Done — see §18.**
-3. Phase 3 — users: create, disable, reset, last-admin guard. **Done — see §19.**
-4. Phase 4 — properties API, including publish/unpublish + revalidation. **Done — see §20.**
-5. Phase 5 — admin UI: list, editor, media manager, dashboard. **Done — see §21.**
-6. Phase 6 — R2 presigning and the browser-side resize/WebP step. **Done — see §22.**
-7. Phase 7 — the six-file public read refactor, plus revalidation on every content write. **Done — see §23.**
+1. Phase 1 — `(admin)` route group, session core, sign-in and forced password change. **Done — see Section 17.**
+2. Phase 2 — Drizzle schema + migrations against the local file DB, then Turso. **Done — see Section 18.**
+3. Phase 3 — users: create, disable, reset, last-admin guard. **Done — see Section 19.**
+4. Phase 4 — properties API, including publish/unpublish + revalidation. **Done — see Section 20.**
+5. Phase 5 — admin UI: list, editor, media manager, dashboard. **Done — see Section 21.**
+6. Phase 6 — R2 presigning and the browser-side resize/WebP step. **Done — see Section 22.**
+7. Phase 7 — the six-file public read refactor, plus revalidation on every content write. **Done — see Section 23.**
 8. Authoring pass — publish-now/draft on the create form, per-surface publishing, structured spec/highlight/amenity
-   rows, the media manager as three grids, and a pre-publish preview. **Done — see §24.**
+   rows, the media manager as three grids, and a pre-publish preview. **Done — see Section 24.**
 9. Phase 8 — verify the two-width screenshot diff against a deployed preview, write the editor guide,
    rehearse rollback.
 
 **Turso is live.** The production database holds both migrations, all seven tables and one admin
 account (`casa`), and the app has been exercised against it end to end — sign-in, the forced
-password-change gate and revocation all read and write Turso (evidence in §18). Its credentials
+password-change gate and revocation all read and write Turso (evidence in Section 18). Its credentials
 live in gitignored `.env.turso.local` under the two names `lib/cms/env.ts` actually reads
 (`TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`), which is what `--turso` loads; `npm run dev` keeps
 using `file:./.local/cms.db`, and Vercel will carry the same two values when the admin is deployed.
@@ -625,6 +691,10 @@ names are canonical, `npm run cms:status` prints the target before it queries, a
 with the command that fixes it.
 
 ## 17. Phase 1 — delivered (verified)
+
+> **How it was built.** Sections 17–24 are the build history: each section is one phase of the order in Section 16 — what
+> was built, and the checks that were run at the time. They are kept as evidence of how the CMS got here, not
+> as instructions; the sections above (Sections 1–16) are the current description.
 
 Built: the `(admin)` route group with its own root layout and tokens, the session core
 (`lib/admin/auth.ts`), the password split (`password.ts` + `password-policy.ts`), sign-in and forced
@@ -768,7 +838,7 @@ Built: the content half of the admin — everything except the screens (those ar
 `lib/cms/queries.ts` is the data layer every rule lives in (slug derivation and immutability,
 `updatedAt` preconditions, publish preconditions, audit-with-JSON-on-delete, one-batch reorder);
 `lib/cms/public.ts` maps published rows + their media into the components' own `Property` shape;
-and the seven endpoints land exactly where §6 promised them.
+and the seven endpoints land exactly where Section 6 promised them.
 
 | # | Check | Result |
 |---|---|---|
@@ -808,7 +878,7 @@ Three things this phase taught:
 
 ## 21. Phase 5 — delivered (verified)
 
-Built: the screens Phase 4 deliberately left out — everything in §7 except the media
+Built: the screens Phase 4 deliberately left out — everything in Section 7 except the media
 upload (that is Phase 6, the R2 pipeline). The dashboard stops being a placeholder and
 becomes `/admin` with live/draft/pending counts, a publish-pending shortcut and last-10
 activity; `/admin/properties` lists the catalogue in grid order with the Live/Draft/Pending
@@ -845,7 +915,7 @@ Two things this phase taught:
 
 ## 22. Phase 6 — delivered (verified)
 
-Built: the image pipeline — the one part of §7 that Phase 5 deliberately left as a read-only
+Built: the image pipeline — the one part of Section 7 that Phase 5 deliberately left as a read-only
 list. `lib/cms/r2.ts` signs a 5-minute browser `PUT` (S3 API against
 `<account>.r2.cloudflarestorage.com`, `@aws-sdk/client-s3` + `s3-request-presigner`), so the
 bytes never touch Vercel; `lib/cms/env.ts` gained the five `R2_*` values with
@@ -884,8 +954,8 @@ Two things this phase taught:
    missing. That is what lets Phase 6 land before the public domain exists.
 
 **One item remains before uploads work in production:** a single bucket CORS rule for the
-browser `PUT` (see §22.1). The public base URL is now optional rather than required — it
-only changes where images are served from, because §22.1's proxy renders them either way.
+browser `PUT` (see Section 22.1). The public base URL is now optional rather than required — it
+only changes where images are served from, because Section 22.1's proxy renders them either way.
 
 ### 22.1 Reads without a public URL — the in-app image proxy (variant A)
 
@@ -938,7 +1008,7 @@ the dashboard (bucket `casa` → Settings → CORS policy):
 A wildcard origin costs nothing security-wise: the upload is protected by the presigned URL
 itself (5 minutes, one key, content-type and size bound), not by the `Origin` header — a
 script can forge that anyway. `GET` is allowed for when a public base URL is added later;
-reads today are same-origin through §22.1's proxy, which needs no CORS at all.
+reads today are same-origin through Section 22.1's proxy, which needs no CORS at all.
 
 If the bucket must stay completely untouched, the same feature moves to variant B (browser
 `POST`s the resized blob to `/api/admin/uploads/blob`, server `PUT`s it): no CORS ever, at
@@ -950,7 +1020,7 @@ and matches D3.
 
 Built: the flip. `/` and `/interior` render published rows from the database instead of the
 hand-written array in `lib/properties.ts`. `lib/cms/public.ts` owns the read — `listPublicProperties()`
-(published only, `position` order, and since the authoring pass an optional surface — §9, §24) and the
+(published only, `position` order, and since the authoring pass an optional surface — Section 9, Section 24) and the
 mapping to the public `Property[]`, so a component still sees exactly the shape it always saw.
 `app/(site)/page.tsx` is
 `async` and hands the catalogue to `PropertyProvider`, which holds the single copy in the client tree:
@@ -975,12 +1045,12 @@ back as `revalidated: ["/", "/interior"]`.
 
 Both gates below are local artefacts under the gitignored `.local/`, run against a production build
 (`npm run build` + `npm start`, `TURSO_DATABASE_URL=file:./.local/cms.db`) — the same shape of evidence
-as §22.
+as Section 22.
 
 | # | Check | Result |
 |---|---|---|
 | 1 | `npm run build` with `TURSO_DATABASE_URL` set | `/` and `/interior` still static, and now prerendered *from the database*. Without the variable a production build fails — correct, because the catalogue is a build input |
-| 2 | Pixel gate — `node .local/verify/pixel-gate.mjs` | Content markup identical to the pre-refactor captures: `/` 75,989 chars, `/interior` 39,271. Script bodies (whose chunk hashes legitimately changed) and `<link>`/`<meta>` tags are excluded; what is compared is the DOM a visitor gets. **Re-run after the authoring pass — `/interior` is still identical, and the two places `/` now differs are named and attributed in §24** |
+| 2 | Pixel gate — `node .local/verify/pixel-gate.mjs` | Content markup identical to the pre-refactor captures: `/` 75,989 chars, `/interior` 39,271. Script bodies (whose chunk hashes legitimately changed) and `<link>`/`<meta>` tags are excluded; what is compared is the DOM a visitor gets. **Re-run after the authoring pass — `/interior` is still identical, and the two places `/` now differs are named and attributed in Section 24** |
 | 3 | All three homes on both routes | `the-residence`, `the-premier-home`, `the-heights` are named on `/` and `/interior`, and each is linked by slug somewhere (`?property=<slug>` on the interior band) |
 | 4 | A save reaches both routes | Renaming `the-heights` through `PATCH` → `/` and `/interior` both answer `cache MISS` and show the new name; renaming it back removes it |
 | 5 | Unpublish / publish | `revalidated: ["/", "/interior"]` both ways; the home leaves both routes and returns |
@@ -1012,7 +1082,7 @@ Three things this phase taught:
    the comparison about the DOM — 75,989 and 39,271 characters of it, identical — while still asserting
    that every published home is actually named and linked on the page, so an empty-but-identical
    catalogue cannot pass. What it deliberately does *not* replace is the two-width screenshot pass
-   (§11), which is the Phase 8 item: no CSS or layout file changed in this phase, and the numbers
+   (Section 11), which is the Phase 8 item: no CSS or layout file changed in this phase, and the numbers
    above are the evidence for that, but visual confirmation happens against the deployed preview where
    the legacy `/images/…` paths and the resized WebP keys are served for real.
 
@@ -1027,7 +1097,7 @@ three existing homes' legacy `/images/…` paths as they were and `mediaSrc()` p
 
 ## 24. Authoring pass — publish now or draft, destinations, rows, grids, preview (delivered)
 
-Between Phases 7 and 8 the *authoring* half of the CMS was brought up to what §7 describes and to what
+Between Phases 7 and 8 the *authoring* half of the CMS was brought up to what Section 7 describes and to what
 using it demanded. Nothing on the public side changed except *where* a home is allowed to appear.
 
 Built:
@@ -1047,7 +1117,7 @@ Built:
    The editor's Media card carries the `#media` anchor with `scroll-mt-20` to clear the sticky topbar,
    and a `useEffect` applies the fragment by hand — a browser only honours one on a full page load,
    and arriving here is a client-side transition.
-2. **Per-surface publishing.** `properties.show_on_home` / `show_on_listing` (§4), migration
+2. **Per-surface publishing.** `properties.show_on_home` / `show_on_listing` (Section 4), migration
    `drizzle/0002_property_placements.sql`, both `NOT NULL DEFAULT 1` — so every existing row kept the
    meaning it already had, which is why `/`'s grid did not change when the column landed. `setPublished`
    is the only writer and it does not touch `updated_at`: moving a home between surfaces is not an edit,
@@ -1056,7 +1126,7 @@ Built:
    listing page, or both"* — and the editor's Publishing card states it before the request is sent.
    `lib/cms/placement.ts` holds the four labels the list, the editor and the preview all print.
 3. **`listPublicProperties(surface)`.** `/` reads `"home"`, `/properties` reads `"listing"`, and
-   `/interior` and `/api/public/properties` keep the default `"all"` (§9). `FEATURED_COUNT` is gone from
+   `/interior` and `/api/public/properties` keep the default `"all"` (Section 9). `FEATURED_COUNT` is gone from
    `collection-section.tsx`: the flag decides now, and the constant no longer pretends to.
 4. **Structured rows.** Highlights, specs and amenities are repeatable typed rows rather than
    `icon | title | description` textareas, so the closed sets (`PROPERTY_HIGHLIGHT_ICONS`, the spec
@@ -1079,7 +1149,7 @@ Built:
    what `publishBlockers` would refuse for, and says so when unsaved changes are included. It is a
    picture of the card, not a second card implementation: the pixel gate stays meaningful only while
    there is exactly one.
-7. **Docs.** §4, §6, §7, §7.1, §7.2, §9 and §12 above, plus the README's CMS section.
+7. **Docs.** Section 4, Section 6, Section 7, Section 7.1, Section 7.2, Section 9 and Section 12 above, plus the README's CMS section.
 
 Two things it deliberately did not do: the drawer keeps its own richer detail view (the booking
 hand-offs, the affordability calculator, the shortlist heart and the pager are live-site concerns the
@@ -1107,7 +1177,7 @@ which is what `.local/verify/diff-report.mjs` (a local artefact, like the script
 establish: it reports every differing region and, with the header swapped for the baseline's own copy,
 shows the rest of the page matching to the character.
 
-One operational note for deployment, and it is the same one §23 ends with: `/` and `/properties` are
+One operational note for deployment, and it is the same one Section 23 ends with: `/` and `/properties` are
 static, so **the migration must reach Turso before this code does** (`npm run cms:migrate -- --turso`).
 A deploy that ships the columns' readers first fails at `/` collection the way the local build did —
 loudly, at build time, which is the good failure.

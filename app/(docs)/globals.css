@@ -1,0 +1,345 @@
+/* The docs surface's own stylesheet.
+   Like app/(admin), it imports neither public site's CSS: app/(site) and app/(interior) each own a
+   design system, and this is a fourth surface that must not be able to bleed into them.
+
+   The pages are prerendered to static HTML with no client JavaScript, so everything here has to be
+   CSS alone - including dark mode, which follows the OS rather than a toggle. */
+
+@import "tailwindcss";
+
+:root {
+  --docs-bg: #ffffff;
+  --docs-surface: #f7f7f8;
+  --docs-fg: #14151a;
+  --docs-muted: #5e626b;
+  --docs-line: #e3e4e8;
+  --docs-accent: #8a6a2f;
+  --docs-code-fg: #24262c;
+  --docs-topbar: rgba(255, 255, 255, 0.88);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --docs-bg: #101114;
+    --docs-surface: #17181c;
+    --docs-fg: #e9eaee;
+    --docs-muted: #9a9ea9;
+    --docs-line: #2a2c33;
+    --docs-accent: #d7b877;
+    --docs-code-fg: #dfe1e7;
+    --docs-topbar: rgba(16, 17, 20, 0.88);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.docs-body {
+  background: var(--docs-bg);
+  color: var(--docs-fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Top bar ------------------------------------------------------------------ */
+
+.docs-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--docs-line);
+  background: var(--docs-topbar);
+  backdrop-filter: blur(8px);
+}
+
+.docs-brand {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  color: inherit;
+}
+
+.docs-topbar nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  font-size: 0.875rem;
+}
+
+.docs-topbar nav a {
+  color: var(--docs-muted);
+  text-decoration: none;
+}
+
+.docs-topbar nav a:hover {
+  color: var(--docs-fg);
+}
+
+/* Shell: sidebar | content (+ on-this-page) -------------------------------- */
+
+.docs-shell {
+  display: grid;
+  grid-template-columns: 17rem minmax(0, 1fr);
+  gap: 2rem 3rem;
+  max-width: 92rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+}
+
+.docs-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3rem;
+  align-content: start;
+}
+
+.docs-sidebar,
+.docs-toc {
+  align-self: start;
+  position: sticky;
+  top: 4.75rem;
+  max-height: calc(100dvh - 6.5rem);
+  overflow-y: auto;
+  font-size: 0.875rem;
+}
+
+.docs-sidebar-label {
+  margin: 0 0 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--docs-muted);
+}
+
+.docs-sidebar ul,
+.docs-toc ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-left: 1px solid var(--docs-line);
+}
+
+.docs-sidebar li a,
+.docs-toc li a {
+  display: block;
+  padding: 0.35rem 0 0.35rem 0.9rem;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
+  color: var(--docs-muted);
+  text-decoration: none;
+}
+
+.docs-sidebar li a:hover,
+.docs-toc li a:hover {
+  color: var(--docs-fg);
+}
+
+.docs-sidebar li a[aria-current="page"] {
+  border-left-color: var(--docs-accent);
+  color: var(--docs-fg);
+  font-weight: 600;
+}
+
+.docs-toc li.docs-toc-h3 a {
+  padding-left: 1.7rem;
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 1200px) {
+  .docs-main--toc {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .docs-main--toc .docs-toc {
+    order: -1;
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .docs-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+  }
+
+  .docs-sidebar {
+    position: static;
+    max-height: none;
+  }
+}
+
+/* The compiled document --------------------------------------------------- */
+
+.docs-article {
+  max-width: 48rem;
+  min-width: 0;
+}
+
+.docs-article :is(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.25;
+  scroll-margin-top: 5.5rem;
+  text-wrap: balance;
+}
+
+.docs-article h1 {
+  margin: 0 0 1.5rem;
+  font-size: 2.125rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.docs-article h2 {
+  margin: 3rem 0 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--docs-line);
+  font-size: 1.4375rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.docs-article h3 {
+  margin: 2rem 0 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 650;
+}
+
+.docs-article h4 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.docs-article p,
+.docs-article ul,
+.docs-article ol,
+.docs-article blockquote,
+.docs-article pre,
+.docs-article table {
+  margin: 0 0 1.15rem;
+}
+
+.docs-article ul,
+.docs-article ol {
+  padding-left: 1.5rem;
+}
+
+.docs-article ul {
+  list-style: disc;
+}
+
+.docs-article ol {
+  list-style: decimal;
+}
+
+.docs-article li {
+  margin-bottom: 0.35rem;
+}
+
+.docs-article li > ul,
+.docs-article li > ol {
+  margin: 0.35rem 0 0.35rem;
+}
+
+.docs-article a {
+  color: var(--docs-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.docs-article strong {
+  font-weight: 650;
+}
+
+.docs-article hr {
+  margin: 2.5rem 0;
+  border: 0;
+  border-top: 1px solid var(--docs-line);
+}
+
+.docs-article blockquote {
+  padding: 0.25rem 0 0.25rem 1rem;
+  border-left: 3px solid var(--docs-line);
+  color: var(--docs-muted);
+}
+
+/* Code --------------------------------------------------------------------- */
+
+.docs-article code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.875em;
+}
+
+.docs-article :not(pre) > code {
+  padding: 0.15em 0.35em;
+  border: 1px solid var(--docs-line);
+  border-radius: 4px;
+  background: var(--docs-surface);
+  color: var(--docs-code-fg);
+  overflow-wrap: break-word;
+}
+
+.docs-article pre {
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--docs-line);
+  border-radius: 8px;
+  background: var(--docs-surface);
+  color: var(--docs-code-fg);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  tab-size: 2;
+  overflow-x: auto;
+}
+
+.docs-article pre code {
+  font-size: inherit;
+}
+
+/* Tables ------------------------------------------------------------------- */
+
+.docs-article table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.docs-article :is(th, td) {
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--docs-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.docs-article th {
+  background: var(--docs-surface);
+  font-weight: 650;
+}
+
+/* Footer ------------------------------------------------------------------- */
+
+.docs-footer {
+  max-width: 92rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+  border-top: 1px solid var(--docs-line);
+  font-size: 0.8125rem;
+  color: var(--docs-muted);
+}
+
+.docs-footer a {
+  color: inherit;
+}

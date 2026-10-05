@@ -1,5 +1,5 @@
 // Shared zod schemas — the contract the admin forms and the route handlers both validate
-// against (docs/cms-build-spec.md §7.2: "one zod schema per write path, reused by the form").
+// against (docs/cms.md Section 7.2: "one zod schema per write path, reused by the form").
 //
 // Client-safe on purpose: `react-hook-form` + `@hookform/resolvers/zod` are already
 // dependencies, and a screen may import these so the rule the browser enforces is literally
@@ -72,7 +72,7 @@ export function fieldErrors(error: z.ZodError) {
 }
 
 // ---------------------------------------------------------------------------------------
-// Properties (docs/cms-build-spec.md §4, §6, §7.1)
+// Properties (docs/cms.md Section 4, Section 6, Section 7.1)
 //
 // The four JSON columns mirror lib/properties.ts exactly — `intro: string[]`,
 // `highlights: { icon, title, description }[]`, `specs: { label, value }[]`,
@@ -206,7 +206,7 @@ export const reorderPropertiesSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------------------
-// Business settings (docs/cms-build-spec.md §6, §7)
+// Business settings (docs/cms.md Section 6, Section 7)
 //
 // The values the site currently hard-codes: the phone number, email, WhatsApp number, opening
 // hours, address and the footer links. `footerLinks` is the one structured value, so it travels
@@ -267,7 +267,7 @@ export type UpdatePropertyInput = z.infer<typeof updatePropertySchema>;
 export type ReorderPropertiesInput = z.infer<typeof reorderPropertiesSchema>;
 
 // ---------------------------------------------------------------------------------------
-// Media uploads (docs/cms-build-spec.md §8 — Phase 6: the R2 pipeline)
+// Media uploads (docs/cms.md Section 8 — Phase 6: the R2 pipeline)
 // ---------------------------------------------------------------------------------------
 
 export const propertyMediaRoleSchema = z.enum(PROPERTY_MEDIA_ROLES);

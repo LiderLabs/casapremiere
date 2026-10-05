@@ -1,4 +1,4 @@
-// Signs a browser→R2 PUT (docs/cms-build-spec.md §8). Editors may upload; the bytes go
+// Signs a browser→R2 PUT (docs/cms.md Section 8). Editors may upload; the bytes go
 // straight to R2 — Vercel only ever signs, and the row is written by /uploads/confirm.
 
 import { NextResponse } from "next/server";

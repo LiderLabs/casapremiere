@@ -1,5 +1,5 @@
 // The catalogue for the admin list: every property, drafts included, flagged when a live one
-// has been edited since its last publish (`pendingChanges`) — docs/cms-build-spec.md §6, §7.
+// has been edited since its last publish (`pendingChanges`) — docs/cms.md Section 6, Section 7.
 
 import { NextResponse } from "next/server";
 

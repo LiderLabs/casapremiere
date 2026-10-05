@@ -20,7 +20,7 @@ import { toPropertyImages, type Property } from "@/lib/properties";
  *
  * A key that is already a public path (`/images/…` — the three existing homes) or a full URL
  * passes through untouched. An R2 key uses R2_PUBLIC_BASE_URL when configured; without it
- * the app proxies the bytes itself (GET /api/media/<key>, spec §22.1), so uploads render
+ * the app proxies the bytes itself (GET /api/media/<key>, spec Section 22.1), so uploads render
  * with S3 API access only. Setting the base URL later flips every src to direct, same keys.
  */
 export function mediaSrc(key: string): string {
@@ -101,7 +101,7 @@ export async function listPublicProperties(surface: PublicSurface = "all"): Prom
   if (rows.length === 0) return [];
 
   // One query for every slug's media rather than one per property: on Turso each query is a round
-  // trip (spec §14), and this runs at revalidation time, not per visitor.
+  // trip (spec Section 14), and this runs at revalidation time, not per visitor.
   const media = await db
     .select(mediaColumns)
     .from(propertyMedia)

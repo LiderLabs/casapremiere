@@ -1,5 +1,5 @@
 // Seeds the catalogue from the hand-written array in lib/properties.ts into the database
-// (docs/cms-build-spec.md §11). This is what makes Phase 7 possible: `/` and `/interior`
+// (docs/cms.md Section 11). This is what makes Phase 7 possible: `/` and `/interior`
 // stop reading the array and start reading these rows.
 //
 //   npm run migrate:properties                 # the local file

@@ -1,4 +1,4 @@
-// Business details as key/value pairs (docs/cms-build-spec.md §6, §7): the phone number, email,
+// Business details as key/value pairs (docs/cms.md Section 6, Section 7): the phone number, email,
 // WhatsApp, opening hours, address and footer links the sites currently hard-code. Admin-only —
 // an editor's screen arrives in Phase 5, which is also when this screen gets its form.
 

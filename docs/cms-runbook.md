@@ -3,20 +3,20 @@
 **Status: planned, not executed.** Both accounts are created by hand in dashboards, so this is not
 fully scriptable. The whole content is 3 properties and 22 media rows.
 
-The two tracks — database (§5) and bucket (§3) — are independent, and a new database with the old
-bucket is a harmless intermediate state: images resolve through `/api/media/<key>` either way (spec
-§22.1). The one dangerous state is a *half-updated deployment* — new credentials in Vercel, old build
-still serving (§4). Nothing in a row records an account id, bucket name or database host, so a move is
+The two tracks — database (Section 5) and bucket (Section 3) — are independent, and a new database with the old
+bucket is a harmless intermediate state: images resolve through `/api/media/<key>` either way (`docs/cms.md`
+Section 22.1). The one dangerous state is a *half-updated deployment* — new credentials in Vercel, old build
+still serving (Section 4). Nothing in a row records an account id, bucket name or database host, so a move is
 a copy plus two environment changes, never a code change, and `git revert` is not part of a rollback.
 
 ## 1. The steps, in order
 
 1. Create the two new accounts by hand (Turso, Cloudflare R2).
-2. **Fix production's migration drift** — §5 · T1. Worth doing whether or not the move happens.
-3. **The database**: create → migrate → copy → verify → switch (§5 · T2–T6).
-4. **Prove it in a browser** before deleting anything (§5 · T7).
-5. **The bucket**, whenever convenient — it does not depend on step 3 (§3).
-6. **Delete the old database and bucket last** (§5 · T8, §3 · B5).
+2. **Fix production's migration drift** — Section 5 · T1. Worth doing whether or not the move happens.
+3. **The database**: create → migrate → copy → verify → switch (Section 5 · T2–T6).
+4. **Prove it in a browser** before deleting anything (Section 5 · T7).
+5. **The bucket**, whenever convenient — it does not depend on step 3 (Section 3).
+6. **Delete the old database and bucket last** (Section 5 · T8, Section 3 · B5).
 
 ## 2. Database structure
 
@@ -41,7 +41,7 @@ definition, `drizzle/0000…0002` are the migrations.
   `must_change_password`). **Production's drift is exactly the second pair**: it has `0001` but not
   `0002_property_placements.sql`, which added them as `NOT NULL DEFAULT true`, so today's code cannot
   read that database — the property list query selects them.
-- CHECK constraints mirror spec §4 (`properties.status`, `property_media.role`), so a bad row cannot
+- CHECK constraints mirror `docs/cms.md` Section 4 (`properties.status`, `property_media.role`), so a bad row cannot
   be written even by a script or pasted SQL.
 
 **Acceptance numbers** (development file, 2 Oct 2026): migrations 3 · tables 8 · 22 media rows
@@ -66,7 +66,7 @@ bucket — point it at the new one rather than writing the policy again.
 | `R2_ACCOUNT_ID` | the **new** account's id — the one value that encodes which account is in play |
 | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | the token |
 | `R2_BUCKET` | `casa-premier-media` |
-| `R2_PUBLIC_BASE_URL` | the custom domain, or leave it unset to keep reads proxied through `/api/media/<key>` (spec §22.1) |
+| `R2_PUBLIC_BASE_URL` | the custom domain, or leave it unset to keep reads proxied through `/api/media/<key>` (`docs/cms.md` Section 22.1) |
 
 **B3. Move the objects.** There is nothing to move today: `npm run cms:r2` reports `objects: 0`,
 because all 22 media rows point at legacy `/images/…` paths served from `public/images`, and
@@ -80,7 +80,7 @@ aws s3 sync s3://old-bucket s3://new-bucket --endpoint-url https://<new-account>
 
 → **Gate:** `npm run cms:r2` shows `objects: N · orphans: 0`, and N matches the new bucket.
 
-**B4. Switch.** Update the five `R2_*` variables in Vercel, then redeploy (§4).
+**B4. Switch.** Update the five `R2_*` variables in Vercel, then redeploy (Section 4).
 
 **B5. Verify, then retire.** `npm run cms:r2` → `objects: N · orphans: 0 · rows with no object: 0`.
 Upload one image in the admin, confirm it lands in the new bucket and renders, then delete the old
@@ -99,10 +99,10 @@ bucket.
   `TURSO_DATABASE_URL`, so local work never touches the live catalogue.
 - **A production build does need the Turso pair**, because `/`, `/properties` and `/interior` are
   prerendered from the database. A deploy that fails while collecting a public route's page data is
-  this pair, missing — see README §Local development.
+  this pair, missing — see `docs/PROJECT-DOCUMENTATION.md` Section 4 (Local development).
 - **Variables in a deployment:** `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `APP_ORIGIN`,
   `IP_HASH_SALT`, `NEXT_PUBLIC_SISTER_SITE_URL`, the five `R2_*`, and `SESSION_TTL_HOURS` if the
-  8-hour default is wrong. `lib/cms/env.ts` is the schema; spec §10 is the annotated table.
+  8-hour default is wrong. `lib/cms/env.ts` is the schema; `docs/cms.md` Section 10 is the annotated table.
 - **Any environment change needs a redeploy.** Values are baked into a build, and a promoted
   deployment still holding the old credentials is the only genuinely dangerous state in this
   document — half the requests succeed and half fail, depending on which instance answers.

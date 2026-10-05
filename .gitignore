@@ -32,3 +32,6 @@ next-env.d.ts
 # local CMS database (development only - never the production store)
 /.local/
 
+# mkdocs build output (the published copy of docs/, built by .github/workflows/docs.yml)
+/site/
+

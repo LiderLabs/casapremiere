@@ -8,11 +8,11 @@ import { useProperty } from "@/components/property/property-provider";
 
 // The catalogue comes from PropertyProvider — the published rows the server read for the *home*
 // surface via lib/cms/public.ts — so the grid and the quick-view drawer can never disagree and a
-// published edit appears here on the next revalidation (docs/cms-build-spec.md D7).
+// published edit appears here on the next revalidation (docs/cms.md D7).
 //
 // There is no count in this file any more. How many homes the landing page previews is the
 // admin's decision rather than a constant: each property carries a "show on the home page" flag,
-// and this grid is exactly the published homes that have it (docs/cms-build-spec.md §9). That is
+// and this grid is exactly the published homes that have it (docs/cms.md Section 9). That is
 // what keeps the grid a shop window and `/properties` — its own flag, its own surface — the
 // catalogue.
 export function CollectionSection() {

@@ -1,6 +1,6 @@
 "use client";
 
-// The business settings form (docs/cms-build-spec.md §6, §7): the six known keys, edited as
+// The business settings form (docs/cms.md Section 6, Section 7): the six known keys, edited as
 // one form and saved with one PUT. An unset key is absent server-side, so the reader falls
 // back to the hard-coded value — which is why clearing a field and saving removes the row
 // rather than storing a blank.

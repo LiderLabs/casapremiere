@@ -1,6 +1,6 @@
 "use client";
 
-// The property editor (docs/cms-build-spec.md §7.1): one Card per part of the Property
+// The property editor (docs/cms.md Section 7.1): one Card per part of the Property
 // shape, saving one section at a time against the revision it loaded (the `updatedAt`
 // precondition → 409 naming the other editor). Dirty tracking, an unsaved-changes guard
 // and a publish confirmation dialog are the speed bumps before something goes live.

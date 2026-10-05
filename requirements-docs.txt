@@ -1,0 +1,9 @@
+# The MkDocs toolchain that publishes docs/ (.github/workflows/docs.yml).
+# Stays out of package.json: it is Python, it is only needed to build the published copy of the
+# documentation, and `npm install` must not depend on it.
+#
+# Local use:
+#   pip install -r requirements-docs.txt
+#   python -m mkdocs serve      # http://127.0.0.1:8000
+#   python -m mkdocs build      # writes site/ (gitignored)
+mkdocs-material==9.7.7

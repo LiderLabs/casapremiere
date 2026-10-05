@@ -1,5 +1,5 @@
 // The drag handle's write: the complete catalogue in its new order, rewritten as one batch
-// (docs/cms-build-spec.md §6). Admin-only — open question 1 in §15 may move this to editors,
+// (docs/cms.md Section 6). Admin-only — open question 1 in Section 15 may move this to editors,
 // and it would be this one `requireApiUser` call that changes.
 
 import { NextResponse } from "next/server";

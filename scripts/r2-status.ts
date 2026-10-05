@@ -1,5 +1,5 @@
 // What is in the image bucket right now. Read-only, so it is safe to point at production —
-// the counterpart to `npm run cms:status` for R2 (docs/cms-build-spec.md §8).
+// the counterpart to `npm run cms:status` for R2 (docs/cms.md Section 8).
 //
 //   npm run cms:r2                     list every object
 //   npm run cms:r2 -- --orphans        list objects no property_media row points at

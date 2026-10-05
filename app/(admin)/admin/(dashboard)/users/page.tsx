@@ -14,7 +14,7 @@ export default async function AdminUsersPage() {
   // has to choose a password.
   const user = await requireUserPage();
 
-  // Users are admin-only (spec §5.2). An editor who types the URL lands back on the dashboard
+  // Users are admin-only (spec Section 5.2). An editor who types the URL lands back on the dashboard
   // rather than on an error page; the API answers 403 for the same request.
   if (user.role !== "admin") redirect("/admin");
 

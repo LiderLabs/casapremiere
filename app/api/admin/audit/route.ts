@@ -1,4 +1,4 @@
-// Who changed what, when (docs/cms-build-spec.md §5.6, §7): the last 50 audit rows.
+// Who changed what, when (docs/cms.md Section 5.6, Section 7): the last 50 audit rows.
 // Editors may read; every mutation in the admin already writes its own row.
 
 import { NextResponse } from "next/server";

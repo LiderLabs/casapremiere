@@ -1,6 +1,6 @@
 "use client";
 
-// The last look before publishing (docs/cms-build-spec.md §7.1): the card as the grids draw it and
+// The last look before publishing (docs/cms.md Section 7.1): the card as the grids draw it and
 // the listing as the quick view reads it, both rendered from the editor's *unsaved* state. The
 // question this dialog answers is "is what I am about to save the thing I want?", which is not a
 // question the last saved revision can answer.

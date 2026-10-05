@@ -1,0 +1,73 @@
+# The published copy of docs/.
+#
+# The same Markdown is rendered in three places and never copied between them: as files on GitHub,
+# as pages at /docs inside the app (lib/docs.ts), and as this site. So this file exists to keep the
+# published copy in agreement with the other two, not to decorate it:
+#
+# - `tables` - Python-Markdown has no table syntax of its own, and these documents are mostly tables.
+# - `toc.slugify` - pymdown-extensions' GitHub-compatible slugger, so "## 17. Runbook - moving ..."
+#   is reachable at the same #anchor the app's headings use and README.md already links to.
+# - `pymdownx.tasklist` - docs/cms.md records acceptance checks as `- [x]` lists, which GitHub and
+#   the app's GFM pipeline render as checkboxes; without this they would publish as bare `[x]`.
+# - `strict` - a `.md` link that no longer resolves fails the build instead of shipping broken, which
+#   is what keeps a rename from silently rotting the cross-document links.
+#
+# Built and deployed by .github/workflows/docs.yml. Locally: `pip install -r requirements-docs.txt`,
+# then `python -m mkdocs serve` (http://127.0.0.1:8000) or `python -m mkdocs build`.
+
+site_name: CASA Première
+site_description: The project documentation for the CASA Première estate site, the interiors site and their admin CMS.
+site_url: https://liderlabs.github.io/casapremiere/
+repo_url: https://github.com/LiderLabs/casapremiere
+repo_name: LiderLabs/casapremiere
+edit_uri: edit/main/docs/
+copyright: The Markdown in <code>docs/</code> is the only copy.
+
+docs_dir: docs
+site_dir: site
+strict: true
+
+# Same order as the sidebar in the app and as ORDER in lib/docs.ts.
+nav:
+  - Overview: index.md
+  - Project documentation: PROJECT-DOCUMENTATION.md
+  - The CMS: cms.md
+  - CMS runbook: cms-runbook.md
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tracking
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - content.code.copy
+  # Dark mode follows the operating system, the way the app's own docs pages do.
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - tables
+  - toc:
+      permalink: true
+      permalink_title: Link to this section
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+extra:
+  generator: false

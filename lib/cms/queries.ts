@@ -1,6 +1,6 @@
 // The CMS's data layer: every read and write that touches a content table.
 //
-// Route handlers validate and translate; components hold no SQL (spec §3); the rules that a
+// Route handlers validate and translate; components hold no SQL (spec Section 3); the rules that a
 // second caller must not be able to skip live here:
 //
 // - a slug is derived from the name on create, and immutable afterwards;
@@ -59,7 +59,7 @@ export type PropertyRecord = {
   createdAt: string;
   updatedAt: string;
   updatedBy: string;
-  /** Live, then edited since: the list's "Pending changes" badge (spec §7). */
+  /** Live, then edited since: the list's "Pending changes" badge (spec Section 7). */
   pendingChanges: boolean;
 };
 
@@ -610,7 +610,7 @@ export async function deleteMediaRow(id: string, actor: SessionUser): Promise<{ 
 
 /**
  * The card (or, failing that, hero) key for every property — one query for the admin list's
- * thumbnails, so the list does not ask the database once per row (spec §14).
+ * thumbnails, so the list does not ask the database once per row (spec Section 14).
  */
 export async function listThumbnailKeys(): Promise<Record<string, string>> {
   const rows = await getDb()

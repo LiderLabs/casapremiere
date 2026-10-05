@@ -21,12 +21,12 @@ import { listPublicProperties } from "@/lib/cms/public";
 
 // The catalogue is read here, on the server, and handed down once — so the grid, the drawer
 // pager and the shortlist all render from published rows rather than a hard-coded array
-// (docs/cms-build-spec.md D7). The page stays statically prerendered and a publish
+// (docs/cms.md D7). The page stays statically prerendered and a publish
 // revalidates it (D6), which is what makes an edit live in seconds without a deploy.
 //
 // The "home" surface: this grid is the shop window, so it shows the published homes the admin
 // flagged for the landing page and the count is theirs to choose — `/properties` is the full
-// catalogue, and it has its own flag (docs/cms-build-spec.md §9).
+// catalogue, and it has its own flag (docs/cms.md Section 9).
 export default async function Home() {
   const properties = await listPublicProperties("home");
 

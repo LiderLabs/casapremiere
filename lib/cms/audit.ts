@@ -1,8 +1,6 @@
 // The audit trail: the substitute for `git log` that content in a database gives up.
-//
-// Every mutation in the admin writes one row naming the actor, and the sign-in flow writes
-// rows for successes, failures and lockouts too - so "who put that live?" and "was someone
-// guessing passwords?" are both answerable from one table.
+
+
 
 import { desc } from "drizzle-orm";
 

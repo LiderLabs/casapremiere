@@ -12,7 +12,7 @@ import { getEnv, requireR2 } from "@/lib/cms/env";
 /** Browser-resized WebP only; the client enforces this too, the server re-checks. */
 export const UPLOAD_CONTENT_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"] as const;
 
-/** 1.5 MB after the browser resize (spec §8). */
+/** 1.5 MB after the browser resize (spec Section 8). */
 export const MAX_UPLOAD_BYTES = 1_500_000;
 
 /** Presigned PUT lifetime: long enough to upload, short enough to steal nothing. */

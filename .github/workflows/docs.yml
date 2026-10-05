@@ -1,0 +1,61 @@
+name: Docs
+
+# Publishes docs/ to GitHub Pages.
+#
+# The app renders the same Markdown at /docs (lib/docs.ts), so this is the second consumer of docs/
+# and the reason a document is never written twice. `mkdocs build` fails on any warning - an
+# unresolvable `[link](other.md)` included - so a broken cross-document link cannot be published.
+#
+# One-time repository setting: Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "requirements-docs.txt"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a run that is already publishing is left to finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-docs.txt
+      - run: pip install -r requirements-docs.txt
+      # `strict: true` lives in mkdocs.yml, so this needs no flag of its own.
+      # The theme prints its MkDocs 2.0 compatibility notice to stderr on every run - it is not a
+      # build warning, `Requires-Dist: mkdocs<2` already keeps the toolchain off MkDocs 2.0, and the
+      # exit code is unaffected. Silence it with NO_MKDOCS_2_WARNING=true if the log noise matters.
+      - run: python -m mkdocs build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

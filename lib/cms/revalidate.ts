@@ -1,4 +1,4 @@
-// Keeping `/`, `/properties` and `/interior` fresh (docs/cms-build-spec.md D6).
+// Keeping `/`, `/properties` and `/interior` fresh (docs/cms.md D6).
 //
 // Phase 7 made the public routes read the database at revalidation time, which widens the
 // promise from "a publish is live in seconds" to "anything that changes what a visitor sees

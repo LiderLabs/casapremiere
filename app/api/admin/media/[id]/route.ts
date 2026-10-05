@@ -1,4 +1,4 @@
-// One image's role or alt text (docs/cms-build-spec.md §8). Editors may edit; card stays
+// One image's role or alt text (docs/cms.md Section 8). Editors may edit; card stays
 // single via lib/cms/queries.ts, where the demotion lives next to every other media rule.
 
 import { NextResponse } from "next/server";

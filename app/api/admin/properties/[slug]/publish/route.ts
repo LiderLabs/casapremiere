@@ -1,4 +1,4 @@
-// Going live (docs/cms-build-spec.md D6, §6, §7.2).
+// Going live (docs/cms.md D6, Section 6, Section 7.2).
 //
 // `published = 1` plus *who* and *when*, then the public routes' caches are revalidated — so the
 // change is on `/`, `/properties` and `/interior` in seconds, with no commit and no redeploy.

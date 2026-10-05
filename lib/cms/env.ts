@@ -1,16 +1,5 @@
 // Server-only environment for the admin CMS.
-//
-// Two rules, both learned the hard way in other projects:
-//
-// 1. Nothing here may reach the browser. There is no `NEXT_PUBLIC_` prefix anywhere
-//    in this module, and no client component may import it - the database URL, its
-//    auth token and the IP-hash salt are secrets.
-// 2. Validation is lazy. `getEnv()` runs on first use instead of at import time, so
-//    a half-configured environment fails the request that needs it rather than
-//    breaking `next build` route collection.
-//
-// Development runs on a local SQLite file (libSQL speaks both `file:` and `libsql://`),
-// so `npm run dev` works with no account and no environment variables at all.
+
 
 import { z } from "zod";
 
@@ -32,7 +21,7 @@ const envSchema = z.object({
   R2_BUCKET: z.string().min(1).optional(),
   /**
    * Public serving base, e.g. https://images.casapremiere.com. Optional: without it R2 keys
-   * are read through the in-app proxy (GET /api/media/<key>, spec §22.1), and the S3 API URL
+   * are read through the in-app proxy (GET /api/media/<key>, spec Section 22.1), and the S3 API URL
    * derived from the account id is used only for signing.
    */
   R2_PUBLIC_BASE_URL: z.string().url().optional(),

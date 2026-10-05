@@ -1,4 +1,4 @@
-// Reset a user's password (spec §5.5): sets a temporary password, forces a change at the next
+// Reset a user's password (spec Section 5.5): sets a temporary password, forces a change at the next
 // sign-in, clears any lockout and signs that user out everywhere.
 //
 // The temporary password is generated on the server and appears in this response and nowhere

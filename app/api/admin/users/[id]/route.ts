@@ -1,4 +1,4 @@
-// Role, status and display name for one user; DELETE soft-disables (spec §5.5).
+// Role, status and display name for one user; DELETE soft-disables (spec Section 5.5).
 //
 // There is deliberately no hard delete: a user's audit trail and `created_by` references are
 // the record of who did what, and a disabled account is exactly as powerless as a missing one.

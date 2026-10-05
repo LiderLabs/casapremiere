@@ -1,12 +1,6 @@
 # CASA Premiere — Project Documentation
 
-The canonical reference for this repository: what it is, how it is put together, how to run it,
-what every route and environment variable means, and how to move its database and image bucket to
-new accounts.
 
-It is the single place to look first. Where a subject has a deeper document — the numbered build
-spec, the phase evidence, the runbook — this file names the file and summarises the part that
-matters here instead of restating it at length.
 
 **Contents**
 
@@ -28,12 +22,13 @@ matters here instead of restating it at length.
 16. [Authentication and structure](#16-authentication-and-structure)
 17. [Runbook — moving Turso and R2 to new accounts](#17-runbook--moving-turso-and-r2-to-new-accounts)
 18. [Related documents](#18-related-documents)
+19. [Documentation surfaces](#19-documentation-surfaces)
 
 ---
 
 ## 1. Overview
 
-**One Next.js application serving three surfaces.** There is no monorepo, no custom server and no
+**One Next.js application serving four surfaces.** There is no monorepo, no custom server and no
 external CDN for fonts or images: the repository root *is* the app.
 
 | Surface | URL | Route group | Own root layout + CSS |
@@ -41,6 +36,7 @@ external CDN for fonts or images: the repository root *is* the app.
 | Estate site (CASA Premier) | `/` and `/properties` | `app/(site)/**` | `app/(site)/layout.tsx`, `app/(site)/globals.css` |
 | Interior site (CASA Premier Interiors) | `/interior` | `app/(interior)/**` | `app/(interior)/layout.tsx`, `app/(interior)/globals.css` |
 | Admin CMS | `/admin/**` | `app/(admin)/**` | `app/(admin)/layout.tsx`, `app/(admin)/globals.css` |
+| Documentation | `/docs`, `/docs/<slug>` | `app/(docs)/**` | `app/(docs)/layout.tsx`, `app/(docs)/globals.css` |
 
 - **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Radix UI primitives
   wrapped in `components/ui/*` · Drizzle ORM over libSQL/SQLite · Cloudflare R2 for images ·
@@ -53,6 +49,9 @@ external CDN for fonts or images: the repository root *is* the app.
   local work never touches the production catalogue.
 - **Editors publish without a deploy.** Every content write revalidates the public routes
   (`lib/cms/revalidate.ts`), so a change is live in seconds.
+- **The documentation renders itself.** `docs/*.md` is the only copy: the app compiles it into
+  `/docs` at build time (`lib/docs.ts`) and MkDocs publishes the same files to GitHub Pages
+  (`mkdocs.yml`) — see Section 19.
 
 The two public sites were merged from two separate apps (`apps/main-app` and `apps/interior`) and
 verified pixel-identical; `apps/interior` was removed after verification and remains recoverable from
@@ -67,10 +66,13 @@ git history.
 | `/` | `app/(site)/page.tsx` | Estate landing page. Prerendered from the database; reads `listPublicProperties("home")`. |
 | `/properties` | `app/(site)/properties/page.tsx` | Full catalogue with status filters. Reads `listPublicProperties("listing")`. |
 | `/interior` | `app/(interior)/interior/page.tsx` | Interiors page. Reads `listPublicProperties("all")`. |
+| `/docs` | `app/(docs)/docs/page.tsx` | The documentation landing page, compiled from `docs/index.md`. |
+| `/docs/<slug>` | `app/(docs)/docs/[slug]/page.tsx` | One page per `docs/*.md`, prerendered at build time; an unknown slug is a 404 (Section 19). |
 | `/robots.txt` | `app/robots.ts` | Generated. |
 
-All three public routes are in `PUBLISHED_PATHS` (`lib/cms/revalidate.ts`) and are revalidated by
-every content write.
+The three database-backed routes (`/`, `/properties`, `/interior`) are in `PUBLISHED_PATHS`
+(`lib/cms/revalidate.ts`) and are revalidated by every content write. `/docs/**` is compiled from the
+repository's own Markdown instead and reads no content, so it is not in that list.
 
 ### Admin pages
 
@@ -131,6 +133,9 @@ repo root/                       ← the single app (repository root)
         signin/  password/                       → "/admin/signin", "/admin/password"
         (dashboard)/                             ← the signed-in shell
           page.tsx  properties/  users/  settings/  audit/
+    (docs)/                      ← the documentation surface (separate root layout + CSS)
+      layout.tsx  globals.css
+      docs/page.tsx  docs/[slug]/page.tsx       → "/docs", "/docs/<slug>"
     api/
       public/properties/route.ts                 → GET /api/public/properties
       media/[...key]/route.ts                    → GET /api/media/<key> (R2 proxy)
@@ -143,15 +148,18 @@ repo root/                       ← the single app (repository root)
   lib/
     cms/                         ← admin data layer (schema, queries, public read, r2, env, audit, …)
     admin/                       ← auth core, password hashing, user helpers, session cookie name
-    properties.ts  booking.ts  forms.ts  cross-sell.ts  site-links.ts  mortgage.ts
+    properties.ts  booking.ts  forms.ts  cross-sell.ts  site-links.ts  mortgage.ts  docs.ts
   scripts/                       ← tsx CLI scripts (cms:migrate, cms:status, cms:copy, cms:r2, admin:*)
   drizzle/                       ← numbered SQL migrations (0000…0002)
   proxy.ts                       ← Next.js middleware/proxy: session-cookie gate for /admin/**
   public/images/                 ← all assets from both original apps (names kept)
+  docs/                          ← the documentation itself: the only copy (Section 19)
+  mkdocs.yml  requirements-docs.txt
+  .github/workflows/docs.yml     ← builds docs/ with MkDocs Material and deploys it to GitHub Pages
 ```
 
-Each route group ships its **own** root layout and `globals.css`, so the three design systems
-(palettes, radii, animation keyframes) can never bleed into each other.
+Each route group ships its **own** root layout and `globals.css`, so the four surfaces — and their
+palettes, radii and animation keyframes — can never bleed into each other.
 
 **Key modules**
 
@@ -170,6 +178,7 @@ Each route group ships its **own** root layout and `globals.css`, so the three d
 | `lib/admin/password.ts` / `password-policy.ts` | Argon2id hashing (server) / pure policy rules (client-safe). |
 | `lib/admin/users.ts` | Account management helpers. |
 | `lib/admin/session-cookie.ts` | The cookie name, shared by the proxy and the auth core. |
+| `lib/docs.ts` | The `/docs` reader: compiles `docs/*.md` into HTML plus a heading outline, with GitHub's own anchors. |
 | `proxy.ts` | Redirects `/admin/**` to sign-in when no session cookie is present. |
 
 ## 4. Local development
@@ -179,7 +188,7 @@ npm install
 npm run dev            # http://localhost:3000  (/, /properties, /interior and /admin)
 ```
 
-Use **npm** (`package-lock.json`); the leftover `pnpm-lock.yaml` was removed. Two extra scripts exist
+Use **npm** (`package-lock.json`); 
 for convenience: `npm run dev:3001` (a second instance) and `npm run lint` (`eslint`).
 
 **Nothing has to be configured.** Outside production, `lib/cms/env.ts` falls back to
@@ -187,7 +196,7 @@ for convenience: `npm run dev:3001` (a second instance) and `npm run lint` (`esl
 deliberately holds **no** `TURSO_DATABASE_URL`, so local work never touches the live catalogue. The
 file database is created by the migration script:
 
-```bash
+```terminal
 npm run cms:migrate                                     # creates/updates ./.local/cms.db (gitignored)
 npm run admin:create-user -- --username casa --role admin
 npm run cms:status                                      # migrations, tables, row counts, accounts
@@ -234,7 +243,7 @@ repository (`LiderLabs/casapremiere`) into Vercel.
    - **Build Command / Install Command**: leave defaults
    - **Environment Variables**: at minimum `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` (required at
      **build** time). Add `APP_ORIGIN`, `IP_HASH_SALT` and the five `R2_*` values the admin needs —
-     see §7 and `docs/cms-build-spec.md` §10.
+     see Section 7 and `docs/cms.md` Section 10.
 4. **Deploy.** Then sign in at `/admin/signin` to confirm the admin came up.
 
 ### Rules that matter
@@ -245,7 +254,7 @@ repository (`LiderLabs/casapremiere`) into Vercel.
 - **Migrations before code.** Apply `npm run cms:migrate -- --turso` (with the target credentials)
   before deploying code that depends on the new columns.
 - **Moving accounts is a copy plus two environment changes**, never a code change — nothing in a row
-  records an account id, bucket name or database host. See §17.
+  records an account id, bucket name or database host. See Section 17.
 
 ## 7. Environment variables
 
@@ -484,8 +493,9 @@ HTML.
 ## 12. CMS features and user flow
 
 The admin lives at `/admin` in this repo and is a complete content workflow: sign in, edit homes,
-upload images, publish, and see who changed what. Everything below is **built and verified** — the
-phase-by-phase evidence tables are in `docs/cms-build-spec.md` §17–§24.
+upload images, publish, and see who changed what. This section is the orientation; **`docs/cms.md` is the
+authoritative description** of the CMS — features (Section 7), the end-to-end user flow (Section 7.3), the API (Section 6), the
+data model (Section 4), authentication (Section 5) and the build history (Sections 17–24).
 
 **Roles.** Two.
 
@@ -511,69 +521,40 @@ when no session cookie is present, and each page/route additionally calls `requi
 
 ### The user flow, end to end
 
-1. **Sign in** at `/admin/signin`. A brand-new account (created by admin or by `admin:create-user`)
-   has `must_change_password = 1`, so the first sign-in lands on `/admin/password`; the account reaches
-   nothing else until it changes its password.
-2. **Dashboard** (`/admin`) — three counts (*Live*, *Pending changes*, *Drafts*), a **Publish pending**
-   shortcut when any live home was edited since it was last published, and the last 10 audit rows.
-3. **Properties** (`/admin/properties`) — every home with a thumbnail, a badge (*Live* / *Pending* /
-   *Draft*) and a **placement** label (which surface it is on, from `lib/cms/placement.ts`). *New
-   property* offers **Publish now** or **Save as draft** — an explicit choice, never a default; either
-   one opens the new editor at its media section (`#media`). Admin-only: reorder (drag) and
-   slug-typed delete.
-4. **Editor** (`/admin/properties/[slug]`) — one page, sectioned saves (each carries the `updatedAt`
-   revision it was based on, so two editors cannot silently overwrite each other — a `409` names who
-   saved first). Sections: details, intro, **repeatable typed rows** for highlights, specs and
-   amenities, and a **Publishing card** with the two destinations (`show_on_home` / `show_on_listing`)
-   and a **Preview** button that renders the unsaved state through the grid's own card and the drawer's
-   own detail rules.
-5. **Media** (`#media` on the editor) — three grids: **card** (single by construction), **hero**, and
-   **gallery**. Uploads are resized in the browser (see §15), sent straight to R2 with a presigned
-   `PUT`, and confirmed into `property_media`.
-6. **Publish / Unpublish** — from the list or the editor's Publishing card, with destinations. Every
-   write (publish, save, reorder, delete, media change) calls `revalidatePublishedPages()`, so `/`,
-   `/properties` and `/interior` are refreshed within seconds — no commit, no redeploy.
-7. **History** (`/admin/audit`) — every mutation and every sign-in event, most recent first, with the
-   actor and a small JSON payload (never a password, never a session token).
+Sign in (a new account must change its password before it can do anything) → dashboard (*Live* / *Pending
+changes* / *Drafts*) → properties (thumbnail, status badge, placement label; *New property* offers **Publish
+now** or **Save as draft**, never a default) → editor (sectioned saves from an `updatedAt` revision,
+repeatable typed rows, a Publishing card with the two destinations and an unsaved-state **Preview**) → media
+(`#media`: three grids — card, hero, gallery; browser resize, then a presigned `PUT` straight to R2) →
+publish/unpublish **with destinations** (every write calls `revalidatePublishedPages()`, so `/`,
+`/properties` and `/interior` refresh within seconds) → history. The step-by-step walkthrough is
+`docs/cms.md` Section 7.3.
 
 ### Feature map
 
 | Piece | Where |
 |---|---|
-| Full build spec (scope, schema, API, auth, effort, risks, evidence per phase) | `docs/cms-build-spec.md` |
+| The CMS document (features, user flow, schema, API, auth, deployment, build history) | `docs/cms.md` |
 | Admin route group | `app/(admin)/**` — its own root layout, so neither site's CSS can bleed in |
 | Content store | **Turso (libSQL)** via `@libsql/client` + Drizzle — dev uses `file:./.local/cms.db`, production a `libsql://` URL, so both run the same SQL and the same migrations |
 | Data layer | `lib/cms/queries.ts` (admin reads/writes), `lib/cms/public.ts` (public read), `lib/cms/schema.ts` (tables) |
 | Users (`/admin/users`) | create, change role, disable/enable, reset password, "sign out everywhere". Admin-only, audited, and unable to remove the last admin or yourself |
 | Properties API | `/api/admin/properties**`, `/api/admin/settings`, `/api/public/properties`. One zod schema per write path, real `400 / 404 / 409 / 422` behaviour, everything audited |
 | Media API | `POST /api/admin/uploads/sign`, `POST /api/admin/uploads/confirm`, `PATCH`/`DELETE /api/admin/media/[id]`. Deleting a property deletes its R2 objects |
-| Images | **Cloudflare R2** — resized in the browser, uploaded with a presigned `PUT`, confirmed into `property_media`. See §15 |
+| Images | **Cloudflare R2** — resized in the browser, uploaded with a presigned `PUT`, confirmed into `property_media`. See Section 15 |
 | Publish | `revalidatePublishedPages()` (`lib/cms/revalidate.ts`) invalidates `PUBLISHED_PATHS` on every content write |
 
 ### Behaviours worth knowing
 
-- **Publish vs save is explicit.** Creating a home requires an `intent` (`publish` or `draft`) — there
-  is no default, so a new home cannot go live by accident.
-- **Placement is set by publishing, not by editing.** `show_on_home` / `show_on_listing` are written
-  when a home is published (or via the Publishing card), so moving a home between surfaces never
-  raises a phantom *Pending changes* badge.
-- **Pending changes.** A live home edited since its last publish is flagged `pendingChanges`, which is
-  what the dashboard's *Pending changes* count and the list's *Pending* badge show.
-- **Optimistic saves.** An update carries the revision it was based on; a stale write returns `409`
-  naming who saved first.
-- **Publish refusal.** Publishing refuses a property the public card could not render (`422`) — the
-  check is `publishBlockers`, the same rule the preview uses.
-- **Delete keeps the row in the audit trail**, including the media keys, because the row itself is gone.
-- **Reorder rewrites every `position` in one batch**, so the grid can never end up half-sorted.
-- **Settings are admin-only and fall back to code.** `getSettings()` returns only keys that have been
-  saved, so an unset key falls back to the value still hard-coded in `lib/booking.ts` / `lib/forms.ts`
-  rather than to a blank.
-- **Audit writes are non-fatal.** A failure to record history must not fail the action it describes;
-  errors are logged and swallowed.
+Publish vs save is explicit (creating a home requires an `intent`), placement is set by publishing rather
+than by editing, a live home edited since its last publish shows as *Pending changes*, and a stale save is a
+`409` naming who saved first. The full list — plus publish refusal (`422`), audit retention on delete, batch
+reorder, and settings falling back to code — is `docs/cms.md` Sections 7.2–7.3.
 
 ## 13. CMS user creation
 
-Two ways to create an account — a script for the CLI and a screen in the admin.
+Two ways to create an account — a script for the CLI and a screen in the admin. The rules (password policy,
+forced change, role handling) are `docs/cms.md` Section 5.5; the commands are here because they are operational.
 
 ### From the CLI
 
@@ -609,13 +590,14 @@ is the break-glass reset (it unlocks and forces a change). `npx tsx scripts/admi
 
 `/admin/users` (admin only) can create an account, change a role, disable/enable, reset a password
 (forced change) and "sign out everywhere". It is audited, and it will not let you remove the last
-admin or yourself.
+admin or yourself — both rules live in `lib/admin/users.ts` (`docs/cms.md` Section 5.5).
 
 ## 14. Database structure
 
 Eight tables in one SQLite database — `.local/cms.db` locally, Turso in production. The same
 migrations run in both, so the structures are identical: `lib/cms/schema.ts` is the authoritative
-definition, `drizzle/0000…0002` are the migrations.
+definition and `docs/cms.md` Section 4 has the full design (columns, JSON shapes, CHECK constraints, indexes). This
+section is the table inventory, what travels when the database moves, and the migration order.
 
 | Group | Table | Rows today | Travels in a move | Note |
 |---|---|---|---|---|
@@ -628,22 +610,13 @@ definition, `drizzle/0000…0002` are the migrations.
 | Auth | `audit_log` | 530 | **no** | the development work history; the new database starts its own |
 | Bookkeeping | `__drizzle_migrations` | 3 | **no** | the target's bookkeeping must be its own |
 
-- Columns are snake_case, timestamps are ISO-8601 `TEXT`, and `intro`, `highlights`, `specs` and
-  `amenities` are the four JSON columns on `properties`, validated by zod against the shapes in
-  `lib/properties.ts`.
-- Booleans are `0`/`1` `INTEGER` (`published`, `show_on_home`, `show_on_listing`,
-  `must_change_password`).
-- **CHECK constraints mirror the spec**: `properties_status_check` accepts only the four
-  `PROPERTY_STATUSES` strings (`Available`, `Under construction`, `Sold`, `Coming soon`) and
-  `property_media_role_check` only `card`, `hero`, `gallery` — so a bad row cannot be written even by
-  a script or pasted SQL. `PROPERTY_STATUSES` (`lib/properties.ts`) is the one runtime list the zod
-  schemas and the CHECK constraint both read.
-- **Indexes:** `properties_position_idx` (grid order), `property_media_slug_idx(slug, role, position)`,
-  `sessions_user_idx`, `audit_log_at_idx`.
-- **The placement columns are destinations, not a second live switch.** `published` is still the one
-  draft/live flag; `show_on_home` / `show_on_listing` say *where a live home appears*. Keeping them
-  off `published` is what lets Unpublish → Publish return a home to where it was, and a home with both
-  set to `0` cannot be published (`publishBlockers`).
+Column formats, the four JSON columns on `properties` (`intro`, `highlights`, `specs`, `amenities`, validated
+by zod against the shapes in `lib/properties.ts`), the `0`/`1` booleans, the CHECK constraints
+(`properties_status_check` reads `PROPERTY_STATUSES`; `property_media_role_check` allows only `card`, `hero`,
+`gallery`) and the indexes are all documented in `docs/cms.md` Section 4. The one thing to remember here: **the
+placement columns are destinations, not a second live switch** — `published` is still the one draft/live flag,
+and `show_on_home` / `show_on_listing` say *where a live home appears*, which is what lets Unpublish → Publish
+return a home to where it was (a home with both set to `0` cannot be published — `publishBlockers`).
 
 **The three migrations**
 
@@ -665,6 +638,8 @@ definition, `drizzle/0000…0002` are the migrations.
 
 Property images live in **Cloudflare R2**, uploaded straight from the browser with a presigned `PUT`
 so bytes never pass through Vercel. The database stores only the object **key** (`property_media.r2_key`).
+The pipeline, validation and key format are `docs/cms.md` Section 8 — what follows is the file map and the
+operational commands.
 
 | Piece | Where |
 |---|---|
@@ -675,36 +650,16 @@ so bytes never pass through Vercel. The database stores only the object **key** 
 | Public read (URL resolution) | `mediaSrc()` in `lib/cms/public.ts` |
 | Proxy for reads without a public domain | `app/api/media/[...key]/route.ts` |
 
-**The pipeline**
-
-1. The browser resizes/converts the file locally — `<canvas>` → WebP, longest edge ≤ **2000px**,
-   quality **0.8**, ≤ **1.5 MB** (`MAX_EDGE`, `MAX_BYTES` in `media-manager.tsx`). No paid image
-   service, and uploads never hit a function body limit.
-2. `POST /api/admin/uploads/sign` returns a presigned `PUT` (5-minute expiry,
-   `UPLOAD_URL_TTL_SECONDS`) and the object key.
-3. The browser `PUT`s the bytes **directly to R2**.
-4. `POST /api/admin/uploads/confirm` records the object into `property_media` (role, position, alt,
-   width, height, bytes).
-5. `PATCH`/`DELETE /api/admin/media/[id]` set a row's role or position, or delete the row **and** its
-   R2 object. Deleting a property deletes its objects too.
-
-**Keys are content-addressed** — `properties/<slug>/<hash>.<ext>` (`uploadKey()`), so a retry never
-duplicates an object, and nothing in a row records a bucket name or account id (which is why moving
-buckets is a copy, never a code change — §17).
-
-**Server-side validation.** `UPLOAD_CONTENT_TYPES` allows only `image/jpeg`, `image/png`,
-`image/webp`, `image/avif`, and `MAX_UPLOAD_BYTES` (`1_500_000`) is re-checked server-side — the
-client enforces both too, but the server does not trust it. `requireR2()` throws if the four signing
-values are absent, so the upload routes fail loudly rather than silently.
-
-**Reading images.** `R2_PUBLIC_BASE_URL` is optional:
-
-- **Unset (today's state):** the app proxies the bytes itself at `GET /api/media/<key>`; uploads still
-  render with only S3 API access.
-- **Set:** every `src` flips to direct (`<base>/<key>`) — same keys, no row change.
-
-A key that is already a public path (`/images/…`, the three original homes) or a full URL passes
-through untouched.
+**The pipeline.** The browser resizes to ≤2000 px WebP (≤1.5 MB) → `POST /api/admin/uploads/sign` returns a
+presigned `PUT` (5-minute expiry) → the browser `PUT`s straight to R2 → `POST /api/admin/uploads/confirm`
+records the row → `PATCH`/`DELETE /api/admin/media/[id]` re-role, re-order or delete (deleting a property
+deletes its objects). Keys are content-addressed (`properties/<slug>/<hash>.<ext>`), so a retry never
+duplicates an object and no row records a bucket name or account id — which is why moving buckets is a copy,
+never a code change (Section 17). Content types (`jpeg/png/webp/avif`) and the 1.5 MB ceiling are re-checked
+server-side, and `requireR2()` fails loudly when the signing values are absent. `R2_PUBLIC_BASE_URL` is
+optional: unset (today's state) reads go through `GET /api/media/<key>`; set, every `src` flips to
+`<base>/<key>`. A key that is already a public path (`/images/…`, the three original homes) or a full URL
+passes through untouched. Full details: `docs/cms.md` Section 8.
 
 **Operational command.** `npm run cms:r2` reports used and orphan objects (it needs the `R2_*` values
 in `.env.local`). It **skips keys beginning with `/`** by design, so the 22 legacy `/images/…` rows are
@@ -716,7 +671,8 @@ does the CORS step for the current bucket.
 
 ## 16. Authentication and structure
 
-Design notes live in `docs/cms-build-spec.md` §5. The pieces:
+Design notes (the session model, cookie options, password policy, throttling and lockout,
+indistinguishability, CSRF and the guards) are `docs/cms.md` Section 5. The pieces:
 
 | Concern | Where |
 |---|---|
@@ -727,57 +683,33 @@ Design notes live in `docs/cms-build-spec.md` §5. The pieces:
 | Sign-in / sign-out / me / password routes | `app/api/admin/auth/*` |
 
 **Sessions are opaque and database-backed.** The cookie holds a random token; only its **sha256**
-(`sessions.token_hash`) is stored, so a dump of the table cannot be replayed and revocation is
-immediate — a disabled user is signed out at once, which a JWT would not give. The session slides:
-`last_seen_at` is touched at most every `SESSION_TOUCH_MINUTES` (5), and lifetime is
-`SESSION_TTL_HOURS` (default 8).
+(`sessions.token_hash`) is stored, so a dump of the table cannot be replayed and revocation is immediate — a
+disabled user is signed out at once, which a JWT would not give. The session slides (`last_seen_at` touched at
+most every `SESSION_TOUCH_MINUTES` = 5; lifetime `SESSION_TTL_HOURS` = 8), and the cookie is `HttpOnly`,
+`SameSite=Lax`, `Secure` outside development, `path=/`.
 
-**Cookie options** (`sessionCookieOptions()`): `HttpOnly`, `SameSite=Lax`,
-`Secure` outside development (the dev server is plain http, where a `Secure` cookie would never be
-stored), `path=/`.
+**Passwords are argon2id** (`@node-rs/argon2`) with a length-over-composition, NIST-style policy: at least
+`PASSWORD_MIN_LENGTH` (**8**) characters, no username or name, and a short deny list. The pure policy lives in
+`password-policy.ts` because `password.ts` pulls in argon2, whose browser build exports nothing.
 
-**Passwords are argon2id** (`@node-rs/argon2`). Policy (`checkPasswordPolicy`, length over
-composition, NIST-style): at least `PASSWORD_MIN_LENGTH` (**8**) characters; must not contain your
-username or your name; must not contain anything in the short `PASSWORD_DENY_LIST`. The pure policy
-lives in `password-policy.ts` because `password.ts` pulls in argon2, whose browser build exports
-nothing — a client component importing it would fail the production build.
+**Throttling and lockout** are fixed-window counters in `rate_limits` — no extra service: **per IP** 20
+attempts / 15 min (`IP_ATTEMPT_LIMIT`), **per username** 5 failures (`USER_ATTEMPT_LIMIT` /
+`MAX_FAILED_ATTEMPTS`, counted only on a failure), and a 5-minute account lock (`LOCKOUT_MINUTES`, sets
+`locked_until`).
 
-**Throttling and lockout.**
+**Indistinguishability.** Every failure returns the same message (`Invalid username or password`), and an
+unknown username still costs an argon2 verification against a throwaway hash (`burnDummyPasswordCheck`), so
+"no such user" and "wrong password" cannot be told apart by response or by timing. Every attempt is audited.
 
-- **Per IP:** `IP_ATTEMPT_LIMIT = 20` attempts per `IP_ATTEMPT_WINDOW_MINUTES = 15`, covering every
-  attempt, so a scanner cannot keep probing.
-- **Per username:** `USER_ATTEMPT_LIMIT = 5` **failures** (`MAX_FAILED_ATTEMPTS`), and the counter is
-  only touched on a failure — so a real user signing in and out never throttles themselves. The
-  window equals `LOCKOUT_MINUTES = 5`, so the counter and the lock expire together.
-- **Account lock:** five wrong passwords set `locked_until`; a success clears the counter and the
-  lock.
-- Both are fixed-window counters in `rate_limits` — no extra service required. A race at a window
-  boundary can cost one extra attempt, which is an acceptable trade for a three-person admin.
+**CSRF.** `assertSameOrigin()` guards every state-changing admin route.
 
-**Indistinguishability.** Every failure mode returns the same message
-(`Invalid username or password`), and an unknown username still costs an argon2 verification against a
-throwaway hash (`burnDummyPasswordCheck`), so "no such user" and "wrong password" cannot be told
-apart by response or by timing. A *locked* account does say it is locked (the user caused it, and it
-saves a support call); a *disabled* account stays generic. Every attempt is audited
-(`auth.login`, `auth.login_failed`, `auth.login_throttled`).
+**Guards.** `proxy.ts` — the cheap gate (`/admin/**` with no session cookie → `/admin/signin`);
+`requireUserPage()` — pages (also `mustChangePassword` → `/admin/password`); `requireApiUser()` — route
+handlers, returning `401`/`403` instead of redirecting; `hasRole(user, "admin")` — the admin-only check.
 
-**CSRF.** `assertSameOrigin()` guards every state-changing admin route: a browser always sends
-`Origin` on a cross-site POST, so a mismatched origin is refused; `APP_ORIGIN` is the expected value
-(or the request's own host/proto when it is unset). A request with neither `Origin` nor `Referer` is
-not a browser (curl, a script), so it is allowed.
-
-**Guards.**
-
-- `proxy.ts` — the cheap, dependency-light gate: `/admin/**` with no session cookie is redirected to
-  `/admin/signin` before any page runs.
-- `requireUserPage()` — pages: signed-out → `/admin/signin`; `mustChangePassword` → `/admin/password`.
-- `requireApiUser()` — route handlers: returns a `401`/`403` response instead of redirecting, with an
-  `allowPendingPasswordChange` option for the password screen itself.
-- `hasRole(user, "admin")` — the role check for admin-only routes.
-
-**Structure.** The admin is its own route group with its own root layout, so neither public site's CSS
-can reach it, and the auth core is imported only by server code (`auth.ts` is explicitly server-only —
-no client component may import it).
+**Structure.** The admin is its own route group with its own root layout, so neither public site's CSS can
+reach it, and the auth core is imported only by server code (`auth.ts` is explicitly server-only). The exact
+constants, cookie options and the guarantees with their acceptance tests are `docs/cms.md` Sections 5.3–5.6.
 
 ## 17. Runbook — moving Turso and R2 to new accounts
 
@@ -785,10 +717,10 @@ no client component may import it).
 > fully scriptable. The whole content is 3 properties and 22 media rows. A copy of this material also
 > lives at `docs/cms-runbook.md`.
 
-The two tracks — database (§17.5, T-steps) and bucket (§17.3, B-steps) — are **independent**, and a
+The two tracks — database (Section 17.5, T-steps) and bucket (Section 17.3, B-steps) — are **independent**, and a
 new database with the old bucket is a harmless intermediate state: images resolve through
 `/api/media/<key>` either way. The one dangerous state is a *half-updated deployment* — new credentials
-in Vercel, old build still serving (§17.4).
+in Vercel, old build still serving (Section 17.4).
 
 **Nothing in a row records an account id, bucket name or database host**, so a move is a **copy plus
 two environment changes — never a code change** — and `git revert` is not part of a rollback.
@@ -796,18 +728,18 @@ two environment changes — never a code change** — and `git revert` is not pa
 ### 17.1 The steps, in order
 
 1. Create the two new accounts by hand (Turso, Cloudflare R2).
-2. **Fix production's migration drift** — §17.5 · T1. Worth doing whether or not the move happens.
-3. **The database**: create → migrate → copy → verify → switch (§17.5 · T2–T6).
-4. **Prove it in a browser** before deleting anything (§17.5 · T7).
-5. **The bucket**, whenever convenient — it does not depend on step 3 (§17.3).
-6. **Delete the old database and bucket last** (§17.5 · T8, §17.3 · B5).
+2. **Fix production's migration drift** — Section 17.5 · T1. Worth doing whether or not the move happens.
+3. **The database**: create → migrate → copy → verify → switch (Section 17.5 · T2–T6).
+4. **Prove it in a browser** before deleting anything (Section 17.5 · T7).
+5. **The bucket**, whenever convenient — it does not depend on step 3 (Section 17.3).
+6. **Delete the old database and bucket last** (Section 17.5 · T8, Section 17.3 · B5).
 
 ### 17.2 Database structure
 
 Eight tables in one SQLite database (`.local/cms.db` locally, Turso in production), identical on both
 sides because the same migrations run in both. `lib/cms/schema.ts` is the authoritative definition;
 `drizzle/0000…0002` are the migrations. **The full table-by-table breakdown and the exact numbers are
-in §14.**
+in Section 14.**
 
 The two facts that matter for this move:
 
@@ -838,7 +770,7 @@ bucket — point it at the new one rather than writing the policy again.
 | `R2_ACCOUNT_ID` | the **new** account's id — the one value that encodes which account is in play |
 | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | the token |
 | `R2_BUCKET` | `casa-premier-media` |
-| `R2_PUBLIC_BASE_URL` | the custom domain, or leave it unset to keep reads proxied through `/api/media/<key>` (§15) |
+| `R2_PUBLIC_BASE_URL` | the custom domain, or leave it unset to keep reads proxied through `/api/media/<key>` (Section 15) |
 
 **B3. Move the objects.** There is nothing to move today: `npm run cms:r2` reports `objects: 0`,
 because all 22 media rows point at legacy `/images/…` paths served from `public/images`, and
@@ -852,7 +784,7 @@ aws s3 sync s3://old-bucket s3://new-bucket --endpoint-url https://<new-account>
 
 → **Gate:** `npm run cms:r2` shows `objects: N · orphans: 0`, and N matches the new bucket.
 
-**B4. Switch.** Update the five `R2_*` variables in Vercel, then redeploy (§17.4).
+**B4. Switch.** Update the five `R2_*` variables in Vercel, then redeploy (Section 17.4).
 
 **B5. Verify, then retire.** `npm run cms:r2` → `objects: N · orphans: 0 · rows with no object: 0`.
 Upload one image in the admin, confirm it lands in the new bucket and renders, then delete the old
@@ -871,10 +803,10 @@ bucket.
   `TURSO_DATABASE_URL`, so local work never touches the live catalogue.
 - **A production build does need the Turso pair**, because `/`, `/properties` and `/interior` are
   prerendered from the database. A deploy that fails while collecting a public route's page data is
-  this pair, missing — see §5.
+  this pair, missing — see Section 5.
 - **Variables in a deployment:** `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `APP_ORIGIN`, `IP_HASH_SALT`,
   the five `R2_*`, and `SESSION_TTL_HOURS` if the 8-hour default is wrong. `lib/cms/env.ts` is the
-  schema; §7 is the annotated table.
+  schema; Section 7 is the annotated table.
 - **Any environment change needs a redeploy.** Values are baked into a build, and a promoted
   deployment still holding the old credentials is the only genuinely dangerous state in this
   document — half the requests succeed and half fail, depending on which instance answers.
@@ -986,7 +918,7 @@ and no content is missing.
 - **Rollback is a variable change, not a restore.** Put the old `TURSO_*` back and redeploy, losing
   content written after cutover; or put the five old `R2_*` back and redeploy, re-uploading anything
   added to the new bucket — keys are content hashes, so no row changes.
-- **`NEXT_PUBLIC_SISTER_SITE_URL` is not part of a move.** It is stale and unread (§7); do not use it
+- **`NEXT_PUBLIC_SISTER_SITE_URL` is not part of a move.** It is stale and unread (Section 7); do not use it
   to keep the two sites pointing at each other.
 
 ### 17.7 Appendix — how `cms:copy` was tested
@@ -1017,8 +949,132 @@ To repeat test 4: copy `.local/cms.db` to a scratch file, migrate it, then
 
 | Document | What it holds |
 |---|---|
-| `docs/cms-build-spec.md` | The numbered build spec: scope, schema, API design, auth design, effort, risks, and the per-phase **evidence tables** (§17–§24). Authoritative where this document and the spec overlap on design intent. |
-| `docs/cms-runbook.md` | The runbook on its own — the steps in order, the schema, local vs production, exact expected output per step, rollback, and `cms:copy`. Reproduced in §17 here. |
+| `docs/cms.md` | The CMS document: what it does, the end-to-end user flow (Section 7.3), the schema, the API, authentication, deployment, and the per-phase **build history** (Sections 17–24). The detail lives here — Sections 12–16 above are the orientation. |
+| `docs/cms-runbook.md` | The runbook on its own — the steps in order, the schema, local vs production, exact expected output per step, rollback, and `cms:copy`. Reproduced in Section 17 here. |
+| `docs/index.md` | The landing page of the documentation set — the MkDocs home page and `/docs` alike (Section 19). |
 | `README.md` | The short overview at the repository root, pointing back to this file. |
 | `lib/cms/schema.ts` | The authoritative table definitions, ahead of any prose. |
 | `package.json` | The authoritative list of scripts (`cms:*`, `admin:*`) and dependencies. |
+
+## 19. Documentation surfaces
+
+**One set of Markdown files, three renderings, no copies.** `docs/*.md` is the only copy of the
+documentation, and three consumers read it:
+
+| Rendering | Where | Produced by |
+|---|---|---|
+| The files | GitHub's own viewer — `docs/*.md` on `main` | nothing; they *are* the source |
+| Pages in this app | `/docs` and `/docs/<slug>` | `lib/docs.ts`, at **build** time |
+| A published site | <https://liderlabs.github.io/casapremiere/> | MkDocs Material, from `.github/workflows/docs.yml` |
+
+Nothing is transcribed between them, so an edit cannot land in one rendering and miss the others. It
+is the anchors that make this practical: every heading is addressed the way GitHub addresses it, so
+`#17-runbook--moving-turso-and-r2-to-new-accounts` — the target of a link `README.md` already ships —
+resolves on GitHub, in the app and on the published site alike.
+
+### 19.1 The pages in the app (`/docs`)
+
+`app/(docs)/**` is a **fourth** route group with its own root layout and `globals.css` (Section 3), so the
+docs design can neither inherit the sites' nor leak into them. It is **public** — `proxy.ts` matches
+only `/admin/:path*` and `/api/admin/:path*`, and `app/robots.ts` disallows only `/admin` and
+`/api` — and it ships **no client JavaScript**: the sidebar, the on-this-page outline and the
+current-document state are all resolved during the build, so nothing in this group ever hydrates.
+
+| Route | File | Renders |
+|---|---|---|
+| `/docs` | `app/(docs)/docs/page.tsx` | `docs/index.md` — the landing page and the MkDocs home page |
+| `/docs/<slug>` | `app/(docs)/docs/[slug]/page.tsx` | `docs/<slug>.md` |
+
+`[slug]/page.tsx` sets `dynamicParams = false` and prerenders one page per file `docSlugs()` returns,
+so a slug is its filename lowercased (`PROJECT-DOCUMENTATION.md` → `/docs/project-documentation`) and
+there is exactly one URL per document: `/docs/index` and any unknown slug are 404s, not aliases.
+
+**`lib/docs.ts`** is the whole mechanism, and it is server-only because it reads the filesystem:
+
+| Export | What it does |
+|---|---|
+| `getDoc(slug)` | Parses a file, compiles it to HTML, drops its own `# Title` (the page renders that as a header, so it is not repeated) and returns the h2/h3 outline. |
+| `listDocs()` | Every document except the landing page, in nav order — the sidebar and the `/docs` index. |
+| `docSlugs()` | The slugs `generateStaticParams()` builds pages for. |
+| `DOCS_HOME` | `"index"` — the one file that is `/docs` rather than `/docs/<slug>`. |
+
+The pipeline is `remark-parse` → `remark-gfm` → `remark-rehype` → `rehype-slug` → `rehype-stringify`,
+and three details keep its output equal to GitHub's and to the published site's:
+
+- **`remark-gfm`** supplies the tables and the `- [x]` checkboxes these documents are largely built
+  from. `docs/cms.md` Section 17 keeps 14 of them, 7 checked, and every rendering agrees on each one.
+- **The slugger is GitHub's.** `github-slugger` (for the outline) and `rehype-slug` (for each
+  heading's `id`) are the package GitHub uses itself, so `## 17. Runbook — moving Turso and R2 to new
+  accounts` is `#17-runbook--moving-turso-and-r2-to-new-accounts` everywhere. The outline slugs
+  *every* heading — h1 and h4–h6 included, in document order — because that is the order `rehype-slug`
+  sees, and the two must agree about a repeat (`Overview` after `Overview` is `overview-1` in both).
+- **Cross-document links are rewritten rather than written twice.** `[the CMS notes](cms.md#the-api)`
+  becomes `/docs/cms#the-api`, and `(index.md)` becomes `/docs` — but only when the target is a file
+  that exists. The Markdown itself carries a plain relative link, which is exactly what GitHub and
+  MkDocs each resolve in their own way.
+
+Parsed documents are cached in memory in production only, so `npm run dev` picks up an edit to a `.md`
+file on the next reload instead of needing a restart. The pipeline renders Markdown and GFM and
+nothing else — there is no raw-HTML pass — so an HTML block pasted into a document would be dropped
+here where MkDocs would publish it. No document contains one today: every `<…>` in `docs/` is inside
+a fenced code block.
+
+### 19.2 The published site (GitHub Pages)
+
+| File | Role |
+|---|---|
+| `mkdocs.yml` | The site: Material, OS light/dark, `docs_dir: docs`, `site_dir: site` (gitignored), the nav, `strict: true`. |
+| `requirements-docs.txt` | `mkdocs-material==9.7.7` — pinned so a rebuild cannot change the published pages, and Material 9.7.x itself requires `mkdocs<2`, so the build cannot be pulled onto the incompatible MkDocs 2.0 either. |
+| `.github/workflows/docs.yml` | A push to `main` touching `docs/**` (or the config) → build → deploy to Pages. One-time setup: **Settings → Pages → Source: GitHub Actions**. |
+
+Four settings in `mkdocs.yml` exist to agree with the other two renderings rather than to decorate
+them: `tables` (Python-Markdown has no table syntax of its own, and these documents are mostly
+tables), `toc.slugify` set to pymdown-extensions' **GitHub-compatible** slugger (the anchors above),
+`pymdownx.tasklist` with `custom_checkbox` (without it the `- [x]` lists would publish as bare `[x]`),
+and `strict: true`.
+
+**What `strict: true` does and does not fail on** — measured on MkDocs 1.6.1, not assumed:
+
+| Situation | Level | `strict` build |
+|---|---|---|
+| `[link](gone.md)` — no such file | `WARNING` | **fails**, exit 1: "Aborted with 1 warnings in strict mode!" |
+| `[link](cms.md#no-such-heading)` — the file exists, the anchor does not | `INFO` | passes |
+| A `docs/*.md` that is missing from the `nav` | `INFO` | passes; the page is built but not listed |
+
+So the guarantee is the one that matters most here: a rename cannot silently rot a cross-document
+link, because the links that pointed at the old name stop resolving and the build stops. A stale
+anchor or a page left out of the nav will not stop a deploy, which is why `nav` and the `ORDER` array
+in `lib/docs.ts` are worth keeping in step — they are the same list, in the same order.
+
+### 19.3 Adding, renaming or moving a document
+
+1. Write `docs/<name>.md`, starting with a single `# Title`. That title becomes the sidebar entry, the
+   `<title>` and the page header in the app; the published site uses the label in `nav`.
+2. Add it to `nav` in `mkdocs.yml` so it is listed there, and to `ORDER` in `lib/docs.ts` if it should
+   not simply follow the others alphabetically (anything unnamed follows, A–Z).
+3. That is all. `[it](name.md)` is a valid link on GitHub, is rewritten to `/docs/name` by the app and
+   is resolved to the sibling page by MkDocs, so a new document needs no link fixing anywhere.
+
+Renaming a file renames its URL (`/docs/<slug>`) and its MkDocs page, so those two lists are the only
+places to update — and the `strict` build reports any link left pointing at the old name.
+
+To read them locally: `npm run dev`, then <http://localhost:3000/docs>. To preview the published
+rendering: `pip install -r requirements-docs.txt`, then `python -m mkdocs serve`
+(<http://127.0.0.1:8000>), or `python -m mkdocs build` into the gitignored `site/`.
+
+### 19.4 What was verified
+
+`npx tsc --noEmit` is clean (`npm run lint` cannot run: `eslint` is missing from `devDependencies` —
+pre-existing, Section 17). On the dev server `/docs` and each of the three document slugs return 200, while
+`/docs/index` — a filename, not a slug (Section 19.1) — and an unknown slug both 404.
+
+Every document was then compiled through `lib/docs.ts` and compared with the built site, heading by
+heading and feature by feature — `index.md` → `PROJECT-DOCUMENTATION.md` → `cms.md` →
+`cms-runbook.md`:
+
+- **h2/h3 anchors**, in order: 3 · 40 · 35 · 7, equal on both sides, and the list includes the
+  double-dash `#17-runbook--moving-turso-and-r2-to-new-accounts`.
+- **Tables** 1 · 25 · 23 · 3, **task-list checkboxes** 0 · 0 · 14 · 0, **code blocks** 1 · 14 · 8 · 8 —
+  every pair equal.
+
+The MkDocs build itself is clean under `strict: true`: no warnings.

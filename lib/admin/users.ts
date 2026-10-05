@@ -1,4 +1,4 @@
-// User administration — the server half of `/admin/users` (docs/cms-build-spec.md §5.5, §7).
+// User administration — the server half of `/admin/users` (docs/cms.md Section 5.5, Section 7).
 //
 // Three invariants live here rather than in the route handlers, so no future caller can
 // forget them:

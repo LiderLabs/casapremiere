@@ -1,4 +1,4 @@
-// Public image reads, proxied through the app (docs/cms-build-spec.md §22.1).
+// Public image reads, proxied through the app (docs/cms.md Section 22.1).
 //
 // Why this exists: the bucket has no public URL yet (S3 API only), and a browser <img>
 // cannot speak SigV4 — so with no R2_PUBLIC_BASE_URL there is nothing to put in src="".
