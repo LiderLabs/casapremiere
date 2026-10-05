@@ -23,7 +23,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const doc = await getDoc(slug);
-  return { title: doc ? `${doc.title} — CASA Première docs` : "Documentation — CASA Première" };
+  return { title: doc ? `${doc.title} — CASA Premiere docs` : "Documentation — CASA Premiere" };
 }
 
 export default async function DocPage({ params }: { params: Promise<{ slug: string }> }) {

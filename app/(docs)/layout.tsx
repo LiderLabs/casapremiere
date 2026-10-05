@@ -16,9 +16,9 @@ const REPO = "https://github.com/LiderLabs/casapremiere";
 const PUBLISHED = "https://liderlabs.github.io/casapremiere/";
 
 export const metadata: Metadata = {
-  title: "Documentation — CASA Première",
+  title: "Documentation — CASA Premiere",
   description:
-    "The CASA Première project documents, rendered from the Markdown in docs/ by the app itself.",
+    "The CASA Premiere project documents, rendered from the Markdown in docs/ by the app itself.",
   icons: {
     icon: ["/logowhite.png", "/logowhite.png"],
     apple: "/CASA-512x512.png",
@@ -31,7 +31,7 @@ export default function DocsRootLayout({ children }: Readonly<{ children: React.
       <body className="docs-body">
         <header className="docs-topbar">
           <Link className="docs-brand" href="/">
-            CASA Première
+            CASA Premiere
           </Link>
           <nav>
             <Link href="/">Estate site</Link>
