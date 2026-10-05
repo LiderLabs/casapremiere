@@ -1,4 +1,4 @@
-# CASA Première documentation
+# CASA Premiere documentation v1
 
 Three documents, all kept as Markdown in `docs/`. One source, three readings: this site, the app's own
 `/docs` route, and GitHub. Nothing is hand-copied between them, so an edit cannot land in one place and
