@@ -1,4 +1,4 @@
-# CASA Première admin CMS
+# CASA Premiere admin CMS
 
 Owner: LiderLabs · Companion docs: `README.md` (site architecture), `docs/PROJECT-DOCUMENTATION.md` (project reference), `docs/cms-runbook.md` (operations).
 
